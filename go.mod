@@ -1,3 +1,3 @@
-module github.com/traefik/plugin-rewritebody
+module github.com/packruler/rewrite-body
 
-go 1.15
+go 1.16
