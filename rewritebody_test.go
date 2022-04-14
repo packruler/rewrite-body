@@ -14,6 +14,7 @@ func TestServeHTTP(t *testing.T) {
 	tests := []struct {
 		desc            string
 		contentEncoding string
+		contentType     string
 		rewrites        []Rewrite
 		lastModified    bool
 		resBody         string
@@ -54,9 +55,21 @@ func TestServeHTTP(t *testing.T) {
 					Replacement: "bar",
 				},
 			},
-			contentEncoding: "gzip",
+			contentEncoding: "other",
 			resBody:         "foo is the new bar",
 			expResBody:      "foo is the new bar",
+		},
+		{
+			desc: "should not replace anything if content type does not contain text or is not empty",
+			rewrites: []Rewrite{
+				{
+					Regex:       "foo",
+					Replacement: "bar",
+				},
+			},
+			contentType: "image",
+			resBody:     "foo is the new bar",
+			expResBody:  "foo is the new bar",
 		},
 		{
 			desc: "should replace foo by bar if content encoding is identity",
@@ -67,6 +80,7 @@ func TestServeHTTP(t *testing.T) {
 				},
 			},
 			contentEncoding: "identity",
+			contentType:     "text/html",
 			resBody:         "foo is the new bar",
 			expResBody:      "bar is the new bar",
 		},
@@ -93,13 +107,14 @@ func TestServeHTTP(t *testing.T) {
 				Rewrites:     test.rewrites,
 			}
 
-			next := func(rw http.ResponseWriter, req *http.Request) {
-				rw.Header().Set("Content-Encoding", test.contentEncoding)
-				rw.Header().Set("Last-Modified", "Thu, 02 Jun 2016 06:01:08 GMT")
-				rw.Header().Set("Content-Length", strconv.Itoa(len(test.resBody)))
-				rw.WriteHeader(http.StatusOK)
+			next := func(responseWriter http.ResponseWriter, req *http.Request) {
+				responseWriter.Header().Set("Content-Encoding", test.contentEncoding)
+				responseWriter.Header().Set("Content-Type", test.contentType)
+				responseWriter.Header().Set("Last-Modified", "Thu, 02 Jun 2016 06:01:08 GMT")
+				responseWriter.Header().Set("Content-Length", strconv.Itoa(len(test.resBody)))
+				responseWriter.WriteHeader(http.StatusOK)
 
-				_, _ = fmt.Fprintf(rw, test.resBody)
+				_, _ = fmt.Fprintf(responseWriter, test.resBody)
 			}
 
 			rewriteBody, err := New(context.Background(), http.HandlerFunc(next), config, "rewriteBody")
