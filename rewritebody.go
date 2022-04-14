@@ -15,13 +15,6 @@ import (
 	"strings"
 )
 
-// var (
-// 	// LoggerINFO Main logger
-// 	LoggerINFO = log.New(ioutil.Discard, "INFO: Fail2Ban: ", log.Ldate|log.Ltime|log.Lshortfile)
-// 	// LoggerDEBUG debug logger
-// 	LoggerDEBUG = log.New(ioutil.Discard, "DEBUG: Fail2Ban: ", log.Ldate|log.Ltime|log.Lshortfile)
-// )
-
 // Rewrite holds one rewrite body configuration.
 type Rewrite struct {
 	Regex       string `json:"regex,omitempty"`
@@ -76,14 +69,16 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 }
 
 func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *http.Request) {
+	if req.Header.Get("Upgrade") == "websocket" {
+		return
+	}
+
 	wrappedWriter := &responseWriter{
 		lastModified:   bodyRewrite.lastModified,
 		ResponseWriter: response,
 	}
 
 	bodyRewrite.next.ServeHTTP(wrappedWriter, req)
-
-	// bodyBytes := wrappedWriter.buffer.Bytes()
 
 	contentEncoding := wrappedWriter.Header().Get("Content-Encoding")
 	contentType := strings.ToLower(wrappedWriter.Header().Get("Content-Type"))
