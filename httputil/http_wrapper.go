@@ -2,12 +2,12 @@
 package httputil
 
 import (
+	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 
@@ -19,10 +19,17 @@ type HTTPWrapper struct {
 	Request  *http.Request
 	Response *http.Response
 
-	http.ResponseWriter
+	buffer bytes.Buffer
 
 	lastModified bool
 	wroteHeader  bool
+
+	http.ResponseWriter
+}
+
+// SetLastModified set value in struct from external package.
+func (wrapper *HTTPWrapper) SetLastModified(value bool) {
+	wrapper.lastModified = value
 }
 
 // SupportsProcessing determine if http.Request is supported by this plugin.
@@ -43,7 +50,7 @@ func SupportsProcessing(request *http.Request) bool {
 
 // GetContentEncoding get the Content-Encoding header value.
 func (wrapper *HTTPWrapper) GetContentEncoding() string {
-	return wrapper.ResponseWriter.Header().Get("Content-Encoding")
+	return wrapper.Header().Get("Content-Encoding")
 }
 
 // SupportsProcessing determine if HttpWrapper is supported by this plugin based on encoding.
@@ -65,15 +72,15 @@ func (wrapper *HTTPWrapper) SupportsProcessing() bool {
 // WriteHeader write the status code and other content for the wrapper.
 func (wrapper *HTTPWrapper) WriteHeader(statusCode int) {
 	if !wrapper.lastModified {
-		wrapper.ResponseWriter.Header().Del("Last-Modified")
+		wrapper.Header().Del("Last-Modified")
 	}
 
 	wrapper.wroteHeader = true
 
-	// Delegates the Content-Length Header creation to the final body write.
-	wrapper.ResponseWriter.Header().Del("Content-Length")
+	// wrapper.Header().WriteHeader(statusCode)
 
-	wrapper.ResponseWriter.WriteHeader(statusCode)
+	// Delegates the Content-Length Header creation to the final body write.
+	wrapper.Header().Del("Content-Length")
 }
 
 // DecompressError an error that occurred in decompression process.
@@ -84,38 +91,46 @@ type DecompressError struct {
 // GetContent load []byte for uncompressed data in response.
 // Inspiration from https://github.com/andybalholm/redwood/blob/master/proxy.go.
 func (wrapper *HTTPWrapper) GetContent(maxLength int) ([]byte, error) {
-	if wrapper.Response.ContentLength > int64(maxLength) {
+	log.Printf("Response: %+v", wrapper.Response)
+
+	if wrapper.buffer.Len() > maxLength {
 		return nil, fmt.Errorf("content too large: %d", wrapper.Request.ContentLength)
 	}
 
-	limitedReader := &io.LimitedReader{
-		R: wrapper.Response.Body,
-		N: int64(maxLength),
-	}
-	content, err := ioutil.ReadAll(limitedReader)
+	// limitedReader := &io.LimitedReader{
+	// 	R: &wrapper.buffer,
+	// 	N: int64(maxLength),
+	// }
+
+	content := wrapper.buffer.Bytes()
+	log.Printf("Content: %s", content)
 
 	// Servers that use broken chunked Transfer-Encoding can give us unexpected EOFs,
 	// even if we got all the content.
-	if errors.Is(err, io.ErrUnexpectedEOF) && wrapper.Response.ContentLength == -1 {
-		err = nil
-	}
+	// if errors.Is(err, io.ErrUnexpectedEOF) && wrapper.Response.ContentLength == -1 {
+	// 	err = nil
+	// }
 
-	if err != nil {
-		return nil, err
-	}
+	// log.Println("1")
 
-	if limitedReader.N == 0 {
-		// We read maxLen without reaching the end.
-		wrapper.Response.Body = io.NopCloser(io.MultiReader(bytes.NewReader(content), wrapper.Response.Body))
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-		return nil, nil
-	}
+	// log.Println("2")
 
-	if wrapper.GetContentEncoding() == "" {
-		wrapper.Response.ContentLength = int64(len(content))
-	}
+	// if limitedReader.N == 0 {
+	// 	// We read maxLen without reaching the end.
+	// 	return nil, nil
+	// }
 
-	wrapper.Response.Body = io.NopCloser(bytes.NewReader(content))
+	// if wrapper.GetContentEncoding() == "" {
+	// 	wrapper.Response.ContentLength = int64(len(content))
+	// }
+
+	// wrapper.Response.Body = io.NopCloser(bytes.NewReader(content))
+
+	log.Println("3")
 
 	if contentEncoding := wrapper.GetContentEncoding(); contentEncoding != "" && len(content) > 0 {
 		br := bytes.NewReader(content)
@@ -128,15 +143,14 @@ func (wrapper *HTTPWrapper) GetContent(maxLength int) ([]byte, error) {
 		return decompressed, nil
 	}
 
+	log.Println("4")
+
 	return content, nil
 }
 
 // SetContent set the content of a response based to be the data supplied encoded with the encoding supplied.
 func (wrapper *HTTPWrapper) SetContent(data []byte, encoding string) {
-	wrapper.Response.Header.Set("Content-Encoding", encoding)
-
-	wrapper.Response.ContentLength = int64(len(data))
-	wrapper.Response.Body = io.NopCloser(bytes.NewReader(data))
+	wrapper.Header().Set("Content-Encoding", encoding)
 
 	if encoding != "" && encoding != "identity" {
 		readCloser, err := compressutil.Encode(data, encoding)
@@ -147,14 +161,28 @@ func (wrapper *HTTPWrapper) SetContent(data []byte, encoding string) {
 		}
 
 		if readCloser != nil {
-			wrapper.Response.Body = readCloser
-			wrapper.Response.Header.Set("Content-Encoding", encoding)
-			wrapper.Response.ContentLength = -1
+			encodedData, err := io.ReadAll(readCloser)
+			if err != nil {
+				log.Printf("Error encoding data: %v", err)
+			}
 
-			return
+			_, _ = wrapper.Write(encodedData)
+			wrapper.Header().Set("Content-Encoding", encoding)
 		}
 	}
+}
 
-	wrapper.Response.ContentLength = int64(len(data))
-	wrapper.Response.Body = io.NopCloser(bytes.NewReader(data))
+// Hijack run http.Hijacker.Hijack().
+func (wrapper *HTTPWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hijacker, ok := wrapper.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", wrapper.ResponseWriter)
+	}
+
+	return hijacker.Hijack()
+}
+
+// BodyBytes test.
+func (wrapper *HTTPWrapper) BodyBytes() []byte {
+	return wrapper.buffer.Bytes()
 }
