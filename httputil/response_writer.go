@@ -10,7 +10,7 @@ import (
 	"github.com/packruler/rewrite-body/compressutil"
 )
 
-// ResponseWrapper stuff.
+// ResponseWrapper a wrapper used to simplify ResponseWriter data access and manipulation.
 type ResponseWrapper struct {
 	buffer       bytes.Buffer
 	lastModified bool
@@ -19,65 +19,49 @@ type ResponseWrapper struct {
 	http.ResponseWriter
 }
 
-// WriteHeader stuff.
-func (wrappedWriter *ResponseWrapper) WriteHeader(statusCode int) {
-	if !wrappedWriter.lastModified {
-		wrappedWriter.ResponseWriter.Header().Del("Last-Modified")
+// WriteHeader into wrapped ResponseWriter.
+func (wrapper *ResponseWrapper) WriteHeader(statusCode int) {
+	if !wrapper.lastModified {
+		wrapper.ResponseWriter.Header().Del("Last-Modified")
 	}
 
-	wrappedWriter.wroteHeader = true
+	wrapper.wroteHeader = true
 
 	// Delegates the Content-Length Header creation to the final body write.
-	wrappedWriter.ResponseWriter.Header().Del("Content-Length")
+	wrapper.ResponseWriter.Header().Del("Content-Length")
 
-	wrappedWriter.ResponseWriter.WriteHeader(statusCode)
+	wrapper.ResponseWriter.WriteHeader(statusCode)
 }
 
-// Write stuff.
-func (wrappedWriter *ResponseWrapper) Write(p []byte) (int, error) {
-	if !wrappedWriter.wroteHeader {
-		wrappedWriter.WriteHeader(http.StatusOK)
+// Write data to internal buffer and mark the status code as http.StatusOK.
+func (wrapper *ResponseWrapper) Write(data []byte) (int, error) {
+	if !wrapper.wroteHeader {
+		wrapper.WriteHeader(http.StatusOK)
 	}
 
-	return wrappedWriter.buffer.Write(p)
+	return wrapper.buffer.Write(data)
 }
 
-// Hijack stuff.
-// func (wrappedWriter *ResponseWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-// 	hijacker, ok := wrappedWriter.ResponseWriter.(http.Hijacker)
-// 	if !ok {
-// 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", wrappedWriter.ResponseWriter)
-// 	}
-
-// 	return hijacker.Hijack()
-// }
-
-// Flush stuff.
-// func (wrappedWriter *ResponseWrapper) Flush() {
-// 	if flusher, ok := wrappedWriter.ResponseWriter.(http.Flusher); ok {
-// 		flusher.Flush()
-// 	}
-// }
-
-// GetBuffer stuff.
-func (wrappedWriter *ResponseWrapper) GetBuffer() *bytes.Buffer {
-	return &wrappedWriter.buffer
+// GetBuffer get a pointer to the ResponseWriter buffer.
+func (wrapper *ResponseWrapper) GetBuffer() *bytes.Buffer {
+	return &wrapper.buffer
 }
 
-// GetContent stuff.
-func (wrappedWriter *ResponseWrapper) GetContent(encoding string) ([]byte, error) {
-	return compressutil.Decode(wrappedWriter.GetBuffer(), encoding)
+// GetContent load the content currently in the internal buffer
+// accounting for possible encoding.
+func (wrapper *ResponseWrapper) GetContent(encoding string) ([]byte, error) {
+	return compressutil.Decode(wrapper.GetBuffer(), encoding)
 }
 
-// SetContent stuff.
-func (wrappedWriter *ResponseWrapper) SetContent(data []byte, encoding string) {
+// SetContent write data to the internal ResponseWriter buffer.
+func (wrapper *ResponseWrapper) SetContent(data []byte, encoding string) {
 	bodyBytes, _ := compressutil.Encode(data, encoding)
 
-	if !wrappedWriter.wroteHeader {
-		wrappedWriter.WriteHeader(http.StatusOK)
+	if !wrapper.wroteHeader {
+		wrapper.WriteHeader(http.StatusOK)
 	}
 
-	if _, err := wrappedWriter.ResponseWriter.Write(bodyBytes); err != nil {
+	if _, err := wrapper.ResponseWriter.Write(bodyBytes); err != nil {
 		log.Printf("unable to write rewrited body: %v", err)
 	}
 }
@@ -99,25 +83,25 @@ func SupportsProcessing(request *http.Request) bool {
 }
 
 // GetContentEncoding get the Content-Encoding header value.
-func (wrappedWriter *ResponseWrapper) GetContentEncoding() string {
-	return wrappedWriter.Header().Get("Content-Encoding")
+func (wrapper *ResponseWrapper) GetContentEncoding() string {
+	return wrapper.Header().Get("Content-Encoding")
 }
 
 // GetContentType get the Content-Encoding header value.
-func (wrappedWriter *ResponseWrapper) GetContentType() string {
-	return wrappedWriter.Header().Get("Content-Type")
+func (wrapper *ResponseWrapper) GetContentType() string {
+	return wrapper.Header().Get("Content-Type")
 }
 
 // SupportsProcessing determine if HttpWrapper is supported by this plugin based on encoding.
-func (wrappedWriter *ResponseWrapper) SupportsProcessing() bool {
-	contentType := wrappedWriter.GetContentType()
+func (wrapper *ResponseWrapper) SupportsProcessing() bool {
+	contentType := wrapper.GetContentType()
 
 	// If content type does not match return values with false
 	if contentType != "" && !strings.Contains(contentType, "text") {
 		return false
 	}
 
-	encoding := wrappedWriter.GetContentEncoding()
+	encoding := wrapper.GetContentEncoding()
 
 	// If content type is supported validate encoding as well
 	switch encoding {
@@ -134,7 +118,7 @@ func (wrappedWriter *ResponseWrapper) SupportsProcessing() bool {
 	}
 }
 
-// SetLastModified stuff.
-func (wrappedWriter *ResponseWrapper) SetLastModified(value bool) {
-	wrappedWriter.lastModified = value
+// SetLastModified update the local lastModified variable from non-package-based users.
+func (wrapper *ResponseWrapper) SetLastModified(value bool) {
+	wrapper.lastModified = value
 }
