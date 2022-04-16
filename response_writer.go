@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"net/http"
+	"strings"
 )
 
 // ResponseWrapper stuff.
@@ -75,5 +76,57 @@ func (wrappedWriter *ResponseWrapper) SetContent(data []byte, encoding string) {
 
 	if _, err := wrappedWriter.ResponseWriter.Write(bodyBytes); err != nil {
 		log.Printf("unable to write rewrited body: %v", err)
+	}
+}
+
+// SupportsProcessing determine if http.Request is supported by this plugin.
+func SupportsProcessing(request *http.Request) bool {
+	// Ignore non GET requests
+	if request.Method != "GET" {
+		return false
+	}
+
+	if strings.Contains(request.Header.Get("Upgrade"), "websocket") {
+		log.Printf("Ignoring websocket request for %s", request.RequestURI)
+
+		return false
+	}
+
+	return true
+}
+
+// GetContentEncoding get the Content-Encoding header value.
+func (wrappedWriter *ResponseWrapper) GetContentEncoding() string {
+	return wrappedWriter.Header().Get("Content-Encoding")
+}
+
+// GetContentType get the Content-Encoding header value.
+func (wrappedWriter *ResponseWrapper) GetContentType() string {
+	return wrappedWriter.Header().Get("Content-Type")
+}
+
+// SupportsProcessing determine if HttpWrapper is supported by this plugin based on encoding.
+func (wrappedWriter *ResponseWrapper) SupportsProcessing() bool {
+	contentType := wrappedWriter.GetContentType()
+
+	// If content type does not match return values with false
+	if contentType != "" && !strings.Contains(contentType, "text") {
+		return false
+	}
+
+	encoding := wrappedWriter.GetContentEncoding()
+
+	// If content type is supported validate encoding as well
+	switch encoding {
+	case "gzip":
+		fallthrough
+	case "deflate":
+		fallthrough
+	case "identity":
+		fallthrough
+	case "":
+		return true
+	default:
+		return false
 	}
 }

@@ -8,8 +8,8 @@ import (
 )
 
 func (wrappedWriter *ResponseWrapper) getHeaderContent() (encoding string, contentType string, isSupported bool) {
-	encoding = wrappedWriter.Header().Get("Content-Encoding")
-	contentType = wrappedWriter.Header().Get("Content-Type")
+	encoding = wrappedWriter.GetContentEncoding()
+	contentType = wrappedWriter.GetContentType()
 
 	// If content type does not match return values with false
 	if contentType != "" && !strings.Contains(contentType, "text") {
