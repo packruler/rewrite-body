@@ -18,7 +18,7 @@ content? This was handled as well.
   * `text/json`
 * The header must have `Content-Encoding` header that is supported by this plugin
   * The original plugin supported `Content-Encoding` of `identity` or empty
-  * This plugin adds support for `gzip`
+  * This plugin adds support for `gzip` and `zlib` encoding
 
 #### Processing Paths
 
@@ -40,10 +40,10 @@ pilot:
   token: "xxxx"
 
 experimental:
-  plugins:
-    rewritebody:
-      modulename: "github.com/traefik/plugin-rewritebody"
-      version: "v0.3.1"
+    plugins:
+        rewrite-body:
+            moduleName: "github.com/packruler/rewrite-body"
+            version: "v0.5.0"
 ```
 
 ### Dynamic
@@ -65,7 +65,7 @@ http:
 
   middlewares:
     plugin:
-        rewritebody:
+        rewrite-body:
           # Keep Last-Modified header returned by the HTTP service.
           # By default, the Last-Modified header is removed.
           lastModified: true
@@ -97,7 +97,7 @@ http:
   middlewares:
     sonarr-theme:
       plugin:
-        rewritebody:
+        rewrite-body:
           rewrites:
             - regex: </head>
               replacement: <link rel="stylesheet" type="text/css" href="https://theme-park.dev/css/base/sonarr/{{ env "THEME" }}.css"></head>
