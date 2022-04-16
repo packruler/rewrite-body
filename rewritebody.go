@@ -68,9 +68,10 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 	}
 
 	wrappedWriter := &ResponseWrapper{
-		lastModified:   bodyRewrite.lastModified,
 		ResponseWriter: response,
 	}
+
+	wrappedWriter.SetLastModified(bodyRewrite.lastModified)
 
 	bodyRewrite.next.ServeHTTP(wrappedWriter, req)
 

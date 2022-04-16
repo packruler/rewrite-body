@@ -130,3 +130,8 @@ func (wrappedWriter *ResponseWrapper) SupportsProcessing() bool {
 		return false
 	}
 }
+
+// SetLastModified stuff.
+func (wrappedWriter *ResponseWrapper) SetLastModified(value bool) {
+	wrappedWriter.lastModified = value
+}
