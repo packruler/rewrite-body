@@ -77,8 +77,6 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	bodyRewrite.next.ServeHTTP(wrappedWriter, req)
 
-	encoding := wrappedWriter.GetContentEncoding()
-
 	isSupported := wrappedWriter.SupportsProcessing()
 	if !isSupported {
 		if _, err := response.Write(wrappedWriter.GetBuffer().Bytes()); err != nil {
@@ -88,7 +86,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		return
 	}
 
-	bodyBytes, err := wrappedWriter.GetContent(encoding)
+	bodyBytes, err := wrappedWriter.GetContent()
 	if err == nil {
 		for _, rwt := range bodyRewrite.rewrites {
 			bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
@@ -97,5 +95,5 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		bodyBytes = wrappedWriter.GetBuffer().Bytes()
 	}
 
-	wrappedWriter.SetContent(bodyBytes, encoding)
+	wrappedWriter.SetContent(bodyBytes)
 }

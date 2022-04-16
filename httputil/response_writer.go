@@ -49,12 +49,17 @@ func (wrapper *ResponseWrapper) GetBuffer() *bytes.Buffer {
 
 // GetContent load the content currently in the internal buffer
 // accounting for possible encoding.
-func (wrapper *ResponseWrapper) GetContent(encoding string) ([]byte, error) {
+func (wrapper *ResponseWrapper) GetContent() ([]byte, error) {
+	encoding := wrapper.GetContentEncoding()
+
 	return compressutil.Decode(wrapper.GetBuffer(), encoding)
 }
 
-// SetContent write data to the internal ResponseWriter buffer.
-func (wrapper *ResponseWrapper) SetContent(data []byte, encoding string) {
+// SetContent write data to the internal ResponseWriter buffer
+// and match initial encoding.
+func (wrapper *ResponseWrapper) SetContent(data []byte) {
+	encoding := wrapper.GetContentEncoding()
+
 	bodyBytes, _ := compressutil.Encode(data, encoding)
 
 	if !wrapper.wroteHeader {
