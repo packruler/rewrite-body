@@ -16,9 +16,6 @@ import (
 
 // HTTPWrapper a struct to be used for handling data manipulation by this plugin.
 type HTTPWrapper struct {
-	Request  *http.Request
-	Response *http.Response
-
 	buffer bytes.Buffer
 
 	lastModified bool
@@ -93,7 +90,7 @@ type DecompressError struct {
 // Inspiration from https://github.com/andybalholm/redwood/blob/master/proxy.go.
 func (wrapper *HTTPWrapper) GetContent(maxLength int) ([]byte, error) {
 	if wrapper.buffer.Len() > maxLength {
-		return nil, fmt.Errorf("content too large: %d", wrapper.Request.ContentLength)
+		return nil, fmt.Errorf("content too large: %d", wrapper.buffer.Len())
 	}
 
 	// limitedReader := &io.LimitedReader{
