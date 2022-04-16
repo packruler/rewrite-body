@@ -1,4 +1,4 @@
-package plugin_rewritebody
+package rewrite_body
 
 import (
 	"bytes"
@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+
+	"github.com/packruler/rewrite-body/compressutil"
 )
 
 func TestServeHTTP(t *testing.T) {
@@ -108,8 +110,8 @@ func TestServeHTTP(t *testing.T) {
 			},
 			contentEncoding: "gzip",
 			lastModified:    true,
-			resBody:         string(compressWithGzip([]byte("foo is the new bar"))),
-			expResBody:      string(compressWithGzip([]byte("bar is the new bar"))),
+			resBody:         compressString("foo is the new bar", "gzip"),
+			expResBody:      compressString("bar is the new bar", "gzip"),
 			expLastModified: true,
 		},
 		{
@@ -122,8 +124,22 @@ func TestServeHTTP(t *testing.T) {
 			},
 			contentEncoding: "deflate",
 			lastModified:    true,
-			resBody:         string(compressWithZlib([]byte("foo is the new bar"))),
-			expResBody:      string(compressWithZlib([]byte("bar is the new bar"))),
+			resBody:         compressString("foo is the new bar", "deflate"),
+			expResBody:      compressString("bar is the new bar", "deflate"),
+			expLastModified: true,
+		},
+		{
+			desc: "should ignore unsupported encoding",
+			rewrites: []Rewrite{
+				{
+					Regex:       "foo",
+					Replacement: "bar",
+				},
+			},
+			contentEncoding: "br",
+			lastModified:    true,
+			resBody:         "foo is the new bar",
+			expResBody:      "foo is the new bar",
 			expLastModified: true,
 		},
 	}
@@ -168,6 +184,12 @@ func TestServeHTTP(t *testing.T) {
 			}
 		})
 	}
+}
+
+func compressString(value string, encoding string) string {
+	compressed, _ := compressutil.Encode([]byte(value), encoding)
+
+	return string(compressed)
 }
 
 func TestNew(t *testing.T) {
