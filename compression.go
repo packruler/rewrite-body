@@ -36,7 +36,7 @@ func (wrappedWriter *ResponseWrapper) getHeaderContent() (encoding string, conte
 func (wrappedWriter *ResponseWrapper) decompressBody(encoding string) ([]byte, bool) {
 	switch encoding {
 	case "gzip":
-		return getBytesFromGzip(*wrappedWriter.GetBuffer())
+		return getBytesFromGzip(wrappedWriter.GetBuffer())
 
 	case "deflate":
 		return getBytesFromZlib(wrappedWriter.GetBuffer())
@@ -72,8 +72,8 @@ func getBytesFromZlib(buffer *bytes.Buffer) ([]byte, bool) {
 	return bodyBytes, true
 }
 
-func getBytesFromGzip(buffer bytes.Buffer) ([]byte, bool) {
-	gzipReader, err := gzip.NewReader(&buffer)
+func getBytesFromGzip(buffer *bytes.Buffer) ([]byte, bool) {
+	gzipReader, err := gzip.NewReader(buffer)
 	if err != nil {
 		log.Printf("Failed to load body reader: %v", err)
 
