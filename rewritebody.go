@@ -63,9 +63,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 }
 
 func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *http.Request) {
-	if req.Header.Get("Upgrade") == "websocket" {
-		log.Printf("Ignoring websocket upgrade| Host: \"%s\" | Path: \"%s\"", req.Host, req.URL.Path)
-
+	if !SupportsProcessing(req) {
 		return
 	}
 
@@ -76,8 +74,9 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	bodyRewrite.next.ServeHTTP(wrappedWriter, req)
 
-	encoding, _, isSupported := wrappedWriter.getHeaderContent()
+	encoding := wrappedWriter.GetContentEncoding()
 
+	isSupported := wrappedWriter.SupportsProcessing()
 	if !isSupported {
 		if _, err := response.Write(wrappedWriter.buffer.Bytes()); err != nil {
 			log.Printf("unable to write body: %v", err)

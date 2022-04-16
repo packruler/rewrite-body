@@ -2,34 +2,33 @@ package rewrite_body
 
 import (
 	"log"
-	"strings"
 
 	"github.com/packruler/rewrite-body/compressutil"
 )
 
-func (wrappedWriter *ResponseWrapper) getHeaderContent() (encoding string, contentType string, isSupported bool) {
-	encoding = wrappedWriter.GetContentEncoding()
-	contentType = wrappedWriter.GetContentType()
+// func (wrappedWriter *ResponseWrapper) getHeaderContent() (encoding string, contentType string, isSupported bool) {
+// 	encoding = wrappedWriter.GetContentEncoding()
+// 	contentType = wrappedWriter.GetContentType()
 
-	// If content type does not match return values with false
-	if contentType != "" && !strings.Contains(contentType, "text") {
-		return encoding, contentType, false
-	}
+// 	// If content type does not match return values with false
+// 	if contentType != "" && !strings.Contains(contentType, "text") {
+// 		return encoding, contentType, false
+// 	}
 
-	// If content type is supported validate encoding as well
-	switch encoding {
-	case "gzip":
-		fallthrough
-	case "deflate":
-		fallthrough
-	case "identity":
-		fallthrough
-	case "":
-		return encoding, contentType, true
-	default:
-		return encoding, contentType, false
-	}
-}
+// 	// If content type is supported validate encoding as well
+// 	switch encoding {
+// 	case "gzip":
+// 		fallthrough
+// 	case "deflate":
+// 		fallthrough
+// 	case "identity":
+// 		fallthrough
+// 	case "":
+// 		return encoding, contentType, true
+// 	default:
+// 		return encoding, contentType, false
+// 	}
+// }
 
 func (wrappedWriter *ResponseWrapper) decompressBody(encoding string) ([]byte, bool) {
 	compressed, err := compressutil.Decode(wrappedWriter.GetBuffer(), encoding)
