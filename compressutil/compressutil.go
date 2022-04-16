@@ -6,6 +6,7 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"io"
+	"log"
 )
 
 // ReaderError for notating that an error occurred while reading compressed data.
@@ -16,7 +17,7 @@ type ReaderError struct {
 }
 
 // Decode data in a bytes.Reader based on supplied encoding.
-func Decode(byteReader *bytes.Reader, encoding string) (data []byte, err error) {
+func Decode(byteReader *bytes.Buffer, encoding string) (data []byte, err error) {
 	reader, err := getRawReader(byteReader, encoding)
 	if err != nil {
 		return nil, &ReaderError{cause: err}
@@ -25,7 +26,7 @@ func Decode(byteReader *bytes.Reader, encoding string) (data []byte, err error) 
 	return io.ReadAll(reader)
 }
 
-func getRawReader(byteReader *bytes.Reader, encoding string) (io.Reader, error) {
+func getRawReader(byteReader *bytes.Buffer, encoding string) (io.Reader, error) {
 	switch encoding {
 	case "gzip":
 		return gzip.NewReader(byteReader)
@@ -39,35 +40,53 @@ func getRawReader(byteReader *bytes.Reader, encoding string) (io.Reader, error) 
 }
 
 // Encode data in a []byte based on supplied encoding.
-func Encode(data []byte, encoding string) (readCloser io.ReadCloser, err error) {
-	byteBuffer := new(bytes.Buffer)
-
-	compressor, err := getCompressor(byteBuffer, encoding)
-	if err != nil {
-		// If an error creating the compressor occurs set to nil to allow uncompressed data to be returned
-		compressor = nil
-	}
-
-	if compressor != nil {
-		_, _ = compressor.Write(data)
-
-		if err = compressor.Close(); err == nil {
-			return io.NopCloser(byteBuffer), nil
-		}
-	}
-
-	return nil, err
-}
-
-func getCompressor(byteBuffer *bytes.Buffer, encoding string) (compressor io.WriteCloser, err error) {
+func Encode(data []byte, encoding string) ([]byte, error) {
 	switch encoding {
 	case "gzip":
-		return gzip.NewWriterLevel(byteBuffer, gzip.DefaultCompression)
+		return compressWithGzip(data)
 
 	case "deflate":
-		return flate.NewWriter(byteBuffer, flate.DefaultCompression)
+		return compressWithZlib(data)
 
 	default:
-		return nil, nil
+		return data, nil
 	}
+}
+
+func compressWithGzip(bodyBytes []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	gzipWriter := gzip.NewWriter(&buf)
+
+	if _, err := gzipWriter.Write(bodyBytes); err != nil {
+		log.Printf("unable to recompress rewrited body: %v", err)
+
+		return nil, err
+	}
+
+	if err := gzipWriter.Close(); err != nil {
+		log.Printf("unable to close gzip writer: %v", err)
+
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func compressWithZlib(bodyBytes []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	zlibWriter, _ := flate.NewWriter(&buf, flate.DefaultCompression)
+
+	if _, err := zlibWriter.Write(bodyBytes); err != nil {
+		log.Printf("unable to recompress rewrited body: %v", err)
+
+		return nil, err
+	}
+
+	if err := zlibWriter.Close(); err != nil {
+		log.Printf("unable to close zlib writer: %v", err)
+
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }

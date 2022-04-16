@@ -92,7 +92,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 			bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
 		}
 
-		bodyBytes = prepareBodyBytes(bodyBytes, encoding)
+		bodyBytes, _ = prepareBodyBytes(bodyBytes, encoding)
 	} else {
 		bodyBytes = wrappedWriter.buffer.Bytes()
 	}

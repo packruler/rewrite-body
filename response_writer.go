@@ -67,7 +67,7 @@ func (wrappedWriter *ResponseWrapper) GetContent(encoding string) ([]byte, bool)
 
 // SetContent stuff.
 func (wrappedWriter *ResponseWrapper) SetContent(data []byte, encoding string) {
-	bodyBytes := prepareBodyBytes(data, encoding)
+	bodyBytes, _ := prepareBodyBytes(data, encoding)
 
 	if !wrappedWriter.wroteHeader {
 		wrappedWriter.WriteHeader(http.StatusOK)
