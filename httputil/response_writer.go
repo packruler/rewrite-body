@@ -1,4 +1,5 @@
-package rewrite_body
+// Package httputil a package for handling http data tasks
+package httputil
 
 import (
 	"bytes"

@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+
+	"github.com/packruler/rewrite-body/httputil"
 )
 
 // Rewrite holds one rewrite body configuration.
@@ -63,11 +65,11 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 }
 
 func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *http.Request) {
-	if !SupportsProcessing(req) {
+	if !httputil.SupportsProcessing(req) {
 		return
 	}
 
-	wrappedWriter := &ResponseWrapper{
+	wrappedWriter := &httputil.ResponseWrapper{
 		ResponseWriter: response,
 	}
 
@@ -79,7 +81,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	isSupported := wrappedWriter.SupportsProcessing()
 	if !isSupported {
-		if _, err := response.Write(wrappedWriter.buffer.Bytes()); err != nil {
+		if _, err := response.Write(wrappedWriter.GetBuffer().Bytes()); err != nil {
 			log.Printf("unable to write body: %v", err)
 		}
 
@@ -92,7 +94,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 			bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
 		}
 	} else {
-		bodyBytes = wrappedWriter.buffer.Bytes()
+		bodyBytes = wrappedWriter.GetBuffer().Bytes()
 	}
 
 	wrappedWriter.SetContent(bodyBytes, encoding)
