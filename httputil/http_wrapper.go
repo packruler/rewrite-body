@@ -72,7 +72,7 @@ func (wrapper *HTTPWrapper) SupportsProcessing() bool {
 // WriteHeader write the status code and other content for the wrapper.
 func (wrapper *HTTPWrapper) WriteHeader(statusCode int) {
 	if !wrapper.lastModified {
-		wrapper.Header().Del("Last-Modified")
+		wrapper.ResponseWriter.Header().Del("Last-Modified")
 	}
 
 	wrapper.wroteHeader = true
@@ -80,7 +80,8 @@ func (wrapper *HTTPWrapper) WriteHeader(statusCode int) {
 	// wrapper.Header().WriteHeader(statusCode)
 
 	// Delegates the Content-Length Header creation to the final body write.
-	wrapper.Header().Del("Content-Length")
+	wrapper.ResponseWriter.Header().Del("Content-Length")
+	wrapper.ResponseWriter.WriteHeader(http.StatusOK)
 }
 
 // DecompressError an error that occurred in decompression process.
@@ -91,8 +92,6 @@ type DecompressError struct {
 // GetContent load []byte for uncompressed data in response.
 // Inspiration from https://github.com/andybalholm/redwood/blob/master/proxy.go.
 func (wrapper *HTTPWrapper) GetContent(maxLength int) ([]byte, error) {
-	log.Printf("Response: %+v", wrapper.Response)
-
 	if wrapper.buffer.Len() > maxLength {
 		return nil, fmt.Errorf("content too large: %d", wrapper.Request.ContentLength)
 	}
@@ -167,7 +166,7 @@ func (wrapper *HTTPWrapper) SetContent(data []byte, encoding string) {
 			}
 
 			_, _ = wrapper.Write(encodedData)
-			wrapper.Header().Set("Content-Encoding", encoding)
+			wrapper.ResponseWriter.Header().Set("Content-Encoding", encoding)
 		}
 	}
 }
