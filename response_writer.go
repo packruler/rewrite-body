@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/packruler/rewrite-body/compressutil"
 )
 
 // ResponseWrapper stuff.
@@ -62,13 +64,13 @@ func (wrappedWriter *ResponseWrapper) GetBuffer() *bytes.Buffer {
 }
 
 // GetContent stuff.
-func (wrappedWriter *ResponseWrapper) GetContent(encoding string) ([]byte, bool) {
-	return wrappedWriter.decompressBody(encoding)
+func (wrappedWriter *ResponseWrapper) GetContent(encoding string) ([]byte, error) {
+	return compressutil.Decode(wrappedWriter.GetBuffer(), encoding)
 }
 
 // SetContent stuff.
 func (wrappedWriter *ResponseWrapper) SetContent(data []byte, encoding string) {
-	bodyBytes, _ := prepareBodyBytes(data, encoding)
+	bodyBytes, _ := compressutil.Encode(data, encoding)
 
 	if !wrappedWriter.wroteHeader {
 		wrappedWriter.WriteHeader(http.StatusOK)

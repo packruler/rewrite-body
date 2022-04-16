@@ -86,13 +86,11 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		return
 	}
 
-	bodyBytes, ok := wrappedWriter.GetContent(encoding)
-	if ok {
+	bodyBytes, err := wrappedWriter.GetContent(encoding)
+	if err == nil {
 		for _, rwt := range bodyRewrite.rewrites {
 			bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
 		}
-
-		bodyBytes, _ = prepareBodyBytes(bodyBytes, encoding)
 	} else {
 		bodyBytes = wrappedWriter.buffer.Bytes()
 	}
