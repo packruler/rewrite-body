@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func (wrappedWriter *ResponseWriter) getHeaderContent() (encoding string, contentType string, isSupported bool) {
+func (wrappedWriter *ResponseWrapper) getHeaderContent() (encoding string, contentType string, isSupported bool) {
 	encoding = wrappedWriter.Header().Get("Content-Encoding")
 	contentType = wrappedWriter.Header().Get("Content-Type")
 
@@ -33,7 +33,7 @@ func (wrappedWriter *ResponseWriter) getHeaderContent() (encoding string, conten
 	}
 }
 
-func (wrappedWriter *ResponseWriter) decompressBody(encoding string) ([]byte, bool) {
+func (wrappedWriter *ResponseWrapper) decompressBody(encoding string) ([]byte, bool) {
 	switch encoding {
 	case "gzip":
 		return getBytesFromGzip(*wrappedWriter.GetBuffer())
