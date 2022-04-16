@@ -126,20 +126,6 @@ func TestServeHTTP(t *testing.T) {
 			expResBody:      string(compressWithZlib([]byte("bar is the new bar"))),
 			expLastModified: true,
 		},
-		{
-			desc: "should support brotli encoding",
-			rewrites: []Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-			},
-			contentEncoding: "br",
-			lastModified:    true,
-			resBody:         string(compressWithBrotli([]byte("foo is the new bar"))),
-			expResBody:      string(compressWithBrotli([]byte("bar is the new bar"))),
-			expLastModified: true,
-		},
 	}
 
 	for _, test := range tests {
