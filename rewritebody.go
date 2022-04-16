@@ -87,12 +87,18 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 	}
 
 	bodyBytes, err := wrappedWriter.GetContent()
-	if err == nil {
-		for _, rwt := range bodyRewrite.rewrites {
-			bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
+	if err != nil {
+		log.Printf("Error loading content: %v", err)
+
+		if _, err := response.Write(wrappedWriter.GetBuffer().Bytes()); err != nil {
+			log.Printf("unable to write body: %v", err)
 		}
-	} else {
-		bodyBytes = wrappedWriter.GetBuffer().Bytes()
+
+		return
+	}
+
+	for _, rwt := range bodyRewrite.rewrites {
+		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
 	}
 
 	wrappedWriter.SetContent(bodyBytes)
