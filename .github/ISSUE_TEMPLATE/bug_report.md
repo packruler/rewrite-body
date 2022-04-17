@@ -10,18 +10,30 @@ assignees: ''
 **Describe the bug**
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Relevant Config**
+Any specific information about regex used. Specific information about
+HTTP query would be appreciated as well!
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+
+**Actual behavior**
+A clear and concise description of what actually happened.
+
+**Logs**
+Any logs from your Treafik logs would be greatly appreciated!!
+
+You can add the following to your Traefik config:
+```yaml
+log:
+  level: DEBUG
+```
+
+Then look for logs that end with:
+```console
+module=github.com/packruler/rewrite-body plugin=plugin-rewritebody
+```
 
 **Server (please complete the following information):**
  - OS: [e.g. Docker, Ubuntu]
