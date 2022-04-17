@@ -2,7 +2,7 @@
 
 This is a fork of [Traefik](https://github.com/traefik)'s [plugin-rewritebody](https://github.com/traefik/plugin-rewritebody)
 that is aimed at extending support to handle `gzip` content. This was initially aimed at extending the support for utilizing
-[theme.park](https://github.com/traefik/plugin-rewritebody) theme's but can likely be used for a range of other uses.
+[theme.park](https://github.com/traefik/plugin-rewritebody)'s themes but can likely be used for a range of other uses.
 
 ## Changes From Original Traefik Plugin
 
