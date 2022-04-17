@@ -65,7 +65,10 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 }
 
 func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *http.Request) {
+	// allow default http.ResponseWriter to handle calls targeting WebSocket upgrades and non GET methods
 	if !httputil.SupportsProcessing(req) {
+		bodyRewrite.next.ServeHTTP(response, req)
+
 		return
 	}
 

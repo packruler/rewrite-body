@@ -79,8 +79,7 @@ func SupportsProcessing(request *http.Request) bool {
 	}
 
 	if strings.Contains(request.Header.Get("Upgrade"), "websocket") {
-		log.Printf("Ignoring websocket request for %s", request.RequestURI)
-
+		// log.Printf("Ignoring websocket request for %s", request.RequestURI)
 		return false
 	}
 
