@@ -106,22 +106,12 @@ func (wrapper *ResponseWrapper) getContentType() string {
 	return wrapper.getHeader("Content-Type")
 }
 
-func (wrapper *ResponseWrapper) getXContentTypeOptions() string {
-	return wrapper.getHeader("X-Content-Type-Options")
-}
-
 func (wrapper *ResponseWrapper) getSetCookie() string {
 	return wrapper.getHeader("Set-Cookie")
 }
 
 // SupportsWriting determine if response headers support updating content.
 func (wrapper *ResponseWrapper) SupportsWriting() bool {
-	xContentTypeOptions := wrapper.getXContentTypeOptions()
-
-	if strings.Contains(xContentTypeOptions, "nosniff") {
-		return false
-	}
-
 	setCookie := wrapper.getSetCookie()
 
 	return !strings.Contains(setCookie, "XSRF-TOKEN")
