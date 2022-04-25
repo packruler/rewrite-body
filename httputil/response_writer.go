@@ -50,7 +50,7 @@ func (wrapper *ResponseWrapper) GetBuffer() *bytes.Buffer {
 // GetContent load the content currently in the internal buffer
 // accounting for possible encoding.
 func (wrapper *ResponseWrapper) GetContent() ([]byte, error) {
-	encoding := wrapper.GetContentEncoding()
+	encoding := wrapper.getContentEncoding()
 
 	return compressutil.Decode(wrapper.GetBuffer(), encoding)
 }
@@ -58,7 +58,7 @@ func (wrapper *ResponseWrapper) GetContent() ([]byte, error) {
 // SetContent write data to the internal ResponseWriter buffer
 // and match initial encoding.
 func (wrapper *ResponseWrapper) SetContent(data []byte) {
-	encoding := wrapper.GetContentEncoding()
+	encoding := wrapper.getContentEncoding()
 
 	bodyBytes, _ := compressutil.Encode(data, encoding)
 
@@ -67,7 +67,8 @@ func (wrapper *ResponseWrapper) SetContent(data []byte) {
 	}
 
 	if _, err := wrapper.ResponseWriter.Write(bodyBytes); err != nil {
-		log.Printf("unable to write rewrited body: %v", err)
+		log.Printf("unable to write rewriten body: %v", err)
+		wrapper.LogHeaders()
 	}
 }
 
@@ -86,26 +87,56 @@ func SupportsProcessing(request *http.Request) bool {
 	return true
 }
 
-// GetContentEncoding get the Content-Encoding header value.
-func (wrapper *ResponseWrapper) GetContentEncoding() string {
-	return wrapper.Header().Get("Content-Encoding")
+func (wrapper *ResponseWrapper) getHeader(headerName string) string {
+	return wrapper.ResponseWriter.Header().Get(headerName)
 }
 
-// GetContentType get the Content-Encoding header value.
-func (wrapper *ResponseWrapper) GetContentType() string {
-	return wrapper.Header().Get("Content-Type")
+// LogHeaders writes current response headers.
+func (wrapper *ResponseWrapper) LogHeaders() {
+	log.Printf("Error Headers: %v", wrapper.ResponseWriter.Header())
+}
+
+// getContentEncoding get the Content-Encoding header value.
+func (wrapper *ResponseWrapper) getContentEncoding() string {
+	return wrapper.getHeader("Content-Encoding")
+}
+
+// getContentType get the Content-Encoding header value.
+func (wrapper *ResponseWrapper) getContentType() string {
+	return wrapper.getHeader("Content-Type")
+}
+
+func (wrapper *ResponseWrapper) getXContentTypeOptions() string {
+	return wrapper.getHeader("X-Content-Type-Options")
+}
+
+func (wrapper *ResponseWrapper) getSetCookie() string {
+	return wrapper.getHeader("Set-Cookie")
+}
+
+// SupportsWriting determine if response headers support updating content.
+func (wrapper *ResponseWrapper) SupportsWriting() bool {
+	xContentTypeOptions := wrapper.getXContentTypeOptions()
+
+	if strings.Contains(xContentTypeOptions, "nosniff") {
+		return false
+	}
+
+	setCookie := wrapper.getSetCookie()
+
+	return !strings.Contains(setCookie, "XSRF-TOKEN")
 }
 
 // SupportsProcessing determine if HttpWrapper is supported by this plugin based on encoding.
 func (wrapper *ResponseWrapper) SupportsProcessing() bool {
-	contentType := wrapper.GetContentType()
+	contentType := wrapper.getContentType()
 
 	// If content type does not match return values with false
 	if contentType != "" && !strings.Contains(contentType, "text") {
 		return false
 	}
 
-	encoding := wrapper.GetContentEncoding()
+	encoding := wrapper.getContentEncoding()
 
 	// If content type is supported validate encoding as well
 	switch encoding {

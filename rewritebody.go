@@ -78,13 +78,13 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	wrappedWriter.SetLastModified(bodyRewrite.lastModified)
 
+	// look into using https://pkg.go.dev/net/http#RoundTripper
 	bodyRewrite.next.ServeHTTP(wrappedWriter, req)
 
-	isSupported := wrappedWriter.SupportsProcessing()
-	if !isSupported {
-		if _, err := response.Write(wrappedWriter.GetBuffer().Bytes()); err != nil {
-			log.Printf("unable to write body: %v", err)
-		}
+	if !wrappedWriter.SupportsProcessing() || !wrappedWriter.SupportsWriting() {
+		// We are ignoring these any errors because the content should be unchanged here.
+		// This could "error" if writing is not supported but content will return properly.
+		_, _ = response.Write(wrappedWriter.GetBuffer().Bytes())
 
 		return
 	}
@@ -94,7 +94,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		log.Printf("Error loading content: %v", err)
 
 		if _, err := response.Write(wrappedWriter.GetBuffer().Bytes()); err != nil {
-			log.Printf("unable to write body: %v", err)
+			log.Printf("unable to write error content: %v", err)
 		}
 
 		return
