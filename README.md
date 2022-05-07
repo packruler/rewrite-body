@@ -64,7 +64,8 @@ http:
       service: "my-service"
 
   middlewares:
-    plugin:
+    rewrite-foo:
+      plugin:
         rewrite-body:
           # Keep Last-Modified header returned by the HTTP service.
           # By default, the Last-Modified header is removed.
