@@ -1,4 +1,4 @@
-displayName: Rewrite Body Gzip
+displayName: Rewrite Body (with compression support)
 
 summary: Built on top of Traefik Rewrite Body plugin to also support gzip decompress -> update -> recompress.
 
