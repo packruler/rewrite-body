@@ -85,7 +85,7 @@ func (wrapper *ResponseWrapper) SetContent(data []byte) {
 // SupportsProcessing determine if http.Request is supported by this plugin.
 func SupportsProcessing(request *http.Request) bool {
 	// Ignore non GET requests
-	if request.Method != "GET" {
+	if request.Method != http.MethodGet {
 		return false
 	}
 
