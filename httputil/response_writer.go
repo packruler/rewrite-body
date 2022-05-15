@@ -2,8 +2,11 @@
 package httputil
 
 import (
+	"bufio"
 	"bytes"
+	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 
@@ -16,15 +19,22 @@ type ResponseWrapper struct {
 	lastModified bool
 	wroteHeader  bool
 
+	code int `default:"200"`
+
 	http.ResponseWriter
 }
 
 // WriteHeader into wrapped ResponseWriter.
 func (wrapper *ResponseWrapper) WriteHeader(statusCode int) {
+	if wrapper.wroteHeader {
+		return
+	}
+
 	if !wrapper.lastModified {
 		wrapper.ResponseWriter.Header().Del("Last-Modified")
 	}
 
+	wrapper.code = statusCode
 	wrapper.wroteHeader = true
 
 	// Delegates the Content-Length Header creation to the final body write.
@@ -146,4 +156,34 @@ func (wrapper *ResponseWrapper) SupportsProcessing() bool {
 // SetLastModified update the local lastModified variable from non-package-based users.
 func (wrapper *ResponseWrapper) SetLastModified(value bool) {
 	wrapper.lastModified = value
+}
+
+// CloseNotify returns a channel that receives at most a
+// single value (true) when the client connection has gone away.
+func (wrapper *ResponseWrapper) CloseNotify() <-chan bool {
+	if w, ok := wrapper.ResponseWriter.(http.CloseNotifier); ok {
+		return w.CloseNotify()
+	}
+
+	return make(<-chan bool)
+}
+
+// Hijack hijacks the connection.
+func (wrapper *ResponseWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := wrapper.ResponseWriter.(http.Hijacker); ok {
+		return hj.Hijack()
+	}
+
+	return nil, nil, fmt.Errorf("%T is not a http.Hijacker", wrapper.ResponseWriter)
+}
+
+// Flush sends any buffered data to the client.
+func (wrapper *ResponseWrapper) Flush() {
+	// If WriteHeader was already called from the caller, this is a NOOP.
+	// Otherwise, codeCatcher.code is actually a 200 here.
+	wrapper.WriteHeader(wrapper.code)
+
+	if flusher, ok := wrapper.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
 }
