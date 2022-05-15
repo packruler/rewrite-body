@@ -85,7 +85,7 @@ func (wrapper *ResponseWrapper) SetContent(data []byte) {
 // SupportsProcessing determine if http.Request is supported by this plugin.
 func SupportsProcessing(request *http.Request) bool {
 	// Ignore non GET requests
-	if request.Method != "GET" {
+	if request.Method != http.MethodGet {
 		return false
 	}
 
@@ -116,23 +116,10 @@ func (wrapper *ResponseWrapper) getContentType() string {
 	return wrapper.getHeader("Content-Type")
 }
 
-func (wrapper *ResponseWrapper) getSetCookie() string {
-	return wrapper.getHeader("Set-Cookie")
-}
-
-// SupportsWriting determine if response headers support updating content.
-func (wrapper *ResponseWrapper) SupportsWriting() bool {
-	setCookie := wrapper.getSetCookie()
-
-	return !strings.Contains(setCookie, "XSRF-TOKEN")
-}
-
 // SupportsProcessing determine if HttpWrapper is supported by this plugin based on encoding.
 func (wrapper *ResponseWrapper) SupportsProcessing() bool {
-	contentType := wrapper.getContentType()
-
 	// If content type does not match return values with false
-	if contentType != "" && !strings.Contains(contentType, "text") {
+	if contentType := wrapper.getContentType(); contentType != "" && !strings.Contains(contentType, "text") {
 		return false
 	}
 

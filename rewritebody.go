@@ -3,6 +3,7 @@ package rewrite_body
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -65,6 +66,8 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 }
 
 func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *http.Request) {
+	defer handlePanic()
+
 	// allow default http.ResponseWriter to handle calls targeting WebSocket upgrades and non GET methods
 	if !httputil.SupportsProcessing(req) {
 		bodyRewrite.next.ServeHTTP(response, req)
@@ -81,7 +84,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 	// look into using https://pkg.go.dev/net/http#RoundTripper
 	bodyRewrite.next.ServeHTTP(wrappedWriter, req)
 
-	if !wrappedWriter.SupportsProcessing() || !wrappedWriter.SupportsWriting() {
+	if !wrappedWriter.SupportsProcessing() {
 		// We are ignoring these any errors because the content should be unchanged here.
 		// This could "error" if writing is not supported but content will return properly.
 		_, _ = response.Write(wrappedWriter.GetBuffer().Bytes())
@@ -100,9 +103,33 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		return
 	}
 
+	if len(bodyBytes) == 0 {
+		// If the body is empty there is no purpose in continuing this process.
+		return
+	}
+
 	for _, rwt := range bodyRewrite.rewrites {
 		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
 	}
 
 	wrappedWriter.SetContent(bodyBytes)
+}
+
+func handlePanic() {
+	if recovery := recover(); recovery != nil {
+		if err, ok := recovery.(error); ok {
+			logError(err)
+		} else {
+			log.Printf("Unhandled error: %v", recovery)
+		}
+	}
+}
+
+func logError(err error) {
+	// Ignore http.ErrAbortHandler because they are expected errors that do not require handling
+	if errors.Is(err, http.ErrAbortHandler) {
+		return
+	}
+
+	log.Printf("Recovered from: %v", err)
 }
