@@ -3,6 +3,7 @@ package rewrite_body
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -65,6 +66,8 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 }
 
 func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *http.Request) {
+	defer handlePanic()
+
 	// allow default http.ResponseWriter to handle calls targeting WebSocket upgrades and non GET methods
 	if !httputil.SupportsProcessing(req) {
 		bodyRewrite.next.ServeHTTP(response, req)
@@ -105,4 +108,22 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 	}
 
 	wrappedWriter.SetContent(bodyBytes)
+}
+
+func handlePanic() {
+	if recovery := recover(); recovery != nil {
+		if err, ok := recovery.(error); ok {
+			logError(err)
+		} else {
+			log.Printf("Unhandled error: %v", recovery)
+		}
+	}
+}
+
+func logError(err error) {
+	if errors.Is(err, http.ErrAbortHandler) {
+		log.Print("Ignored error")
+	} else {
+		log.Printf("Recovered from: %v", err)
+	}
 }
