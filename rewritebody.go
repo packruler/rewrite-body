@@ -127,7 +127,9 @@ func handlePanic() {
 
 func logError(err error) {
 	// Ignore http.ErrAbortHandler because they are expected errors that do not require handling
-	if !errors.Is(err, http.ErrAbortHandler) {
-		log.Printf("Recovered from: %v", err)
+	if errors.Is(err, http.ErrAbortHandler) {
+		return
 	}
+
+	log.Printf("Recovered from: %v", err)
 }
