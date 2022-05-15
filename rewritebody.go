@@ -84,7 +84,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 	// look into using https://pkg.go.dev/net/http#RoundTripper
 	bodyRewrite.next.ServeHTTP(wrappedWriter, req)
 
-	if !wrappedWriter.SupportsProcessing() || !wrappedWriter.SupportsWriting() {
+	if !wrappedWriter.SupportsProcessing() {
 		// We are ignoring these any errors because the content should be unchanged here.
 		// This could "error" if writing is not supported but content will return properly.
 		_, _ = response.Write(wrappedWriter.GetBuffer().Bytes())
@@ -100,6 +100,11 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 			log.Printf("unable to write error content: %v", err)
 		}
 
+		return
+	}
+
+	if len(bodyBytes) == 0 {
+		// If the body is empty there is no purpose in continuing this process.
 		return
 	}
 
@@ -121,9 +126,8 @@ func handlePanic() {
 }
 
 func logError(err error) {
-	if errors.Is(err, http.ErrAbortHandler) {
-		log.Print("Ignored error")
-	} else {
+	// Ignore http.ErrAbortHandler because they are expected errors that do not require handling
+	if !errors.Is(err, http.ErrAbortHandler) {
 		log.Printf("Recovered from: %v", err)
 	}
 }
