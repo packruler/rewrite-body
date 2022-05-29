@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	"github.com/packruler/rewrite-body/httputil"
+	"github.com/packruler/rewrite-body/logger"
 )
 
 // Rewrite holds one rewrite body configuration.
@@ -22,6 +23,7 @@ type Rewrite struct {
 type Config struct {
 	LastModified bool      `json:"lastModified,omitempty"`
 	Rewrites     []Rewrite `json:"rewrites,omitempty"`
+	LogLevel     int8      `json:"logLevel,omitempty"`
 }
 
 // CreateConfig creates and initializes the plugin configuration.
@@ -39,6 +41,7 @@ type rewriteBody struct {
 	next         http.Handler
 	rewrites     []rewrite
 	lastModified bool
+	logger       logger.LogWriter
 }
 
 // New creates and returns a new rewrite body plugin instance.
@@ -57,11 +60,24 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		}
 	}
 
+	switch config.LogLevel {
+	// Convert default 0 to Info level
+	case 0:
+		config.LogLevel = int8(logger.Info)
+	// Allow -1 to be call for Trace level
+	case -1:
+		config.LogLevel = int8(logger.Trace)
+	default:
+	}
+
+	logWriter := *logger.CreateLogger(logger.LogLevel(config.LogLevel))
+
 	return &rewriteBody{
 		name:         name,
 		next:         next,
 		rewrites:     rewrites,
 		lastModified: config.LastModified,
+		logger:       logWriter,
 	}, nil
 }
 
@@ -70,10 +86,13 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	// allow default http.ResponseWriter to handle calls targeting WebSocket upgrades and non GET methods
 	if !httputil.SupportsProcessing(req) {
+		bodyRewrite.logger.LogDebugf("Ignoring unsupported request: %v", req)
 		bodyRewrite.next.ServeHTTP(response, req)
 
 		return
 	}
+
+	bodyRewrite.logger.LogDebugf("Starting supported request: %v", req)
 
 	wrappedWriter := &httputil.ResponseWrapper{
 		ResponseWriter: response,
@@ -88,20 +107,23 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		// We are ignoring these any errors because the content should be unchanged here.
 		// This could "error" if writing is not supported but content will return properly.
 		_, _ = response.Write(wrappedWriter.GetBuffer().Bytes())
+		bodyRewrite.logger.LogDebugf("Ignoring unsupported response: %v", wrappedWriter)
 
 		return
 	}
 
 	bodyBytes, err := wrappedWriter.GetContent()
 	if err != nil {
-		log.Printf("Error loading content: %v", err)
+		bodyRewrite.logger.LogErrorf("Error loading content: %v", err)
 
 		if _, err := response.Write(wrappedWriter.GetBuffer().Bytes()); err != nil {
-			log.Printf("unable to write error content: %v", err)
+			bodyRewrite.logger.LogErrorf("unable to write error content: %v", err)
 		}
 
 		return
 	}
+
+	bodyRewrite.logger.LogDebugf("Response body: %s", bodyBytes)
 
 	if len(bodyBytes) == 0 {
 		// If the body is empty there is no purpose in continuing this process.
@@ -112,6 +134,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
 	}
 
+	bodyRewrite.logger.LogDebugf("Transformed body: %s", bodyBytes)
 	wrappedWriter.SetContent(bodyBytes)
 }
 
