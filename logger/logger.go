@@ -8,7 +8,7 @@ import (
 )
 
 // LogLevel type definition of supported log levels.
-type LogLevel uint8
+type LogLevel int8
 
 const (
 	// Trace level of logs.
@@ -29,6 +29,7 @@ type LogWriter struct {
 	loggers map[LogLevel]*log.Logger
 }
 
+//nolint:ireturn
 // CreateLogger create the LogWriter struct with required content.
 func CreateLogger(level LogLevel) *LogWriter {
 	loggers := make(map[LogLevel]*log.Logger, Error-1)
@@ -45,6 +46,7 @@ func CreateLogger(level LogLevel) *LogWriter {
 	}
 }
 
+//nolint:ireturn
 func createLoggerWithBuffer(level LogLevel, buffer *bytes.Buffer) *LogWriter {
 	loggers := make(map[LogLevel]*log.Logger, Error-1)
 

@@ -149,6 +149,7 @@ func TestServeHTTP(t *testing.T) {
 			config := &Config{
 				LastModified: test.lastModified,
 				Rewrites:     test.rewrites,
+				LogLevel:     -1,
 			}
 
 			next := func(responseWriter http.ResponseWriter, req *http.Request) {
