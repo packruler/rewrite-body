@@ -3,6 +3,7 @@ package logger
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 )
@@ -29,7 +30,6 @@ type LogWriter struct {
 	loggers map[LogLevel]*log.Logger
 }
 
-//nolint:ireturn
 // CreateLogger create the LogWriter struct with required content.
 func CreateLogger(level LogLevel) *LogWriter {
 	loggers := make(map[LogLevel]*log.Logger, Error-1)
@@ -46,7 +46,6 @@ func CreateLogger(level LogLevel) *LogWriter {
 	}
 }
 
-//nolint:ireturn
 func createLoggerWithBuffer(level LogLevel, buffer *bytes.Buffer) *LogWriter {
 	loggers := make(map[LogLevel]*log.Logger, Error-1)
 
@@ -94,4 +93,29 @@ func (logger *LogWriter) LogWarning(message string) {
 // LogError write Error level logs.
 func (logger *LogWriter) LogError(message string) {
 	logger.writeLog(Error, message)
+}
+
+// LogTracef write Trace level logs with formatting similar to fmt.Sprintf.
+func (logger *LogWriter) LogTracef(format string, a ...interface{}) {
+	logger.writeLog(Trace, fmt.Sprintf(format, a...))
+}
+
+// LogDebugf write Debug level logs with formatting similar to fmt.Sprintf.
+func (logger *LogWriter) LogDebugf(format string, a ...interface{}) {
+	logger.writeLog(Debug, fmt.Sprintf(format, a...))
+}
+
+// LogInfof write Info level logs with formatting similar to fmt.Sprintf.
+func (logger *LogWriter) LogInfof(format string, a ...interface{}) {
+	logger.writeLog(Info, fmt.Sprintf(format, a...))
+}
+
+// LogWarningf write Warning level logs with formatting similar to fmt.Sprintf.
+func (logger *LogWriter) LogWarningf(format string, a ...interface{}) {
+	logger.writeLog(Warning, fmt.Sprintf(format, a...))
+}
+
+// LogErrorf write Error level logs with formatting similar to fmt.Sprintf.
+func (logger *LogWriter) LogErrorf(format string, a ...interface{}) {
+	logger.writeLog(Error, fmt.Sprintf(format, a...))
 }

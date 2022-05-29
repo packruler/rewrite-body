@@ -86,13 +86,13 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	// allow default http.ResponseWriter to handle calls targeting WebSocket upgrades and non GET methods
 	if !httputil.SupportsProcessing(req) {
-		bodyRewrite.logger.LogDebug(fmt.Sprintf("Ignoring unsupported request: %v", req))
+		bodyRewrite.logger.LogDebugf("Ignoring unsupported request: %v", req)
 		bodyRewrite.next.ServeHTTP(response, req)
 
 		return
 	}
 
-	bodyRewrite.logger.LogDebug(fmt.Sprintf("Starting supported request: %v", req))
+	bodyRewrite.logger.LogDebugf("Starting supported request: %v", req)
 
 	wrappedWriter := &httputil.ResponseWrapper{
 		ResponseWriter: response,
@@ -107,23 +107,23 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		// We are ignoring these any errors because the content should be unchanged here.
 		// This could "error" if writing is not supported but content will return properly.
 		_, _ = response.Write(wrappedWriter.GetBuffer().Bytes())
-		bodyRewrite.logger.LogDebug(fmt.Sprintf("Ignoring unsupported response: %v", wrappedWriter))
+		bodyRewrite.logger.LogDebugf("Ignoring unsupported response: %v", wrappedWriter)
 
 		return
 	}
 
 	bodyBytes, err := wrappedWriter.GetContent()
 	if err != nil {
-		bodyRewrite.logger.LogError(fmt.Sprintf("Error loading content: %v", err))
+		bodyRewrite.logger.LogErrorf("Error loading content: %v", err)
 
 		if _, err := response.Write(wrappedWriter.GetBuffer().Bytes()); err != nil {
-			bodyRewrite.logger.LogError(fmt.Sprintf("unable to write error content: %v", err))
+			bodyRewrite.logger.LogErrorf("unable to write error content: %v", err)
 		}
 
 		return
 	}
 
-	bodyRewrite.logger.LogDebug(fmt.Sprintf("Response body: %s", bodyBytes))
+	bodyRewrite.logger.LogDebugf("Response body: %s", bodyBytes)
 
 	if len(bodyBytes) == 0 {
 		// If the body is empty there is no purpose in continuing this process.
@@ -134,7 +134,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
 	}
 
-	bodyRewrite.logger.LogDebug(fmt.Sprintf("Transformed body: %s", bodyBytes))
+	bodyRewrite.logger.LogDebugf("Transformed body: %s", bodyBytes)
 	wrappedWriter.SetContent(bodyBytes)
 }
 
