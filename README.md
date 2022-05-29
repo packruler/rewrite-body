@@ -43,7 +43,7 @@ experimental:
     plugins:
         rewrite-body:
             moduleName: "github.com/packruler/rewrite-body"
-            version: "v0.5.0"
+            version: "v1.0.1"
 ```
 
 ### Dynamic
@@ -75,6 +75,10 @@ http:
           rewrites:
             - regex: "foo"
               replacement: "bar"
+
+          # logLevel is optional, defaults to Info level.
+          # Available logLevels: (Trace: -1, Debug: 1, Info: 2, Warning: 3, Error: 4)
+          logLevel: 2
   services:
     my-service:
       loadBalancer:
