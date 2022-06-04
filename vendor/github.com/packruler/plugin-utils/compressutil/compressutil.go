@@ -17,10 +17,13 @@ type ReaderError struct {
 }
 
 // Decode data in a bytes.Reader based on supplied encoding.
-func Decode(byteReader *bytes.Buffer, encoding string) (data []byte, err error) {
+func Decode(byteReader *bytes.Buffer, encoding string) ([]byte, error) {
 	reader, err := getRawReader(byteReader, encoding)
 	if err != nil {
-		return nil, &ReaderError{cause: err}
+		return nil, &ReaderError{
+			error: err,
+			cause: err,
+		}
 	}
 
 	return io.ReadAll(reader)
@@ -28,10 +31,10 @@ func Decode(byteReader *bytes.Buffer, encoding string) (data []byte, err error) 
 
 func getRawReader(byteReader *bytes.Buffer, encoding string) (io.Reader, error) {
 	switch encoding {
-	case "gzip":
+	case Gzip:
 		return gzip.NewReader(byteReader)
 
-	case "deflate":
+	case Deflate:
 		return flate.NewReader(byteReader), nil
 
 	default:
@@ -42,10 +45,10 @@ func getRawReader(byteReader *bytes.Buffer, encoding string) (io.Reader, error) 
 // Encode data in a []byte based on supplied encoding.
 func Encode(data []byte, encoding string) ([]byte, error) {
 	switch encoding {
-	case "gzip":
+	case Gzip:
 		return compressWithGzip(data)
 
-	case "deflate":
+	case Deflate:
 		return compressWithZlib(data)
 
 	default:

@@ -5,23 +5,44 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"strings"
 
-	"github.com/packruler/rewrite-body/compressutil"
+	"github.com/packruler/plugin-utils/compressutil"
+	"github.com/packruler/plugin-utils/logger"
 )
 
 // ResponseWrapper a wrapper used to simplify ResponseWriter data access and manipulation.
 type ResponseWrapper struct {
 	buffer       bytes.Buffer
-	lastModified bool
+	lastModified bool `default:"true"`
 	wroteHeader  bool
 
 	code int `default:"200"`
 
+	logWriter  logger.LogWriter
+	monitoring MonitoringConfig
+
 	http.ResponseWriter
+}
+
+// WrapWriter create a ResponseWrapper for provided configuration.
+func WrapWriter(
+	responseWriter http.ResponseWriter,
+	monitoringConfig MonitoringConfig,
+	logWriter logger.LogWriter,
+	lastModified bool,
+) *ResponseWrapper {
+	return &ResponseWrapper{
+		buffer:         bytes.Buffer{},
+		lastModified:   lastModified,
+		wroteHeader:    false,
+		code:           http.StatusOK,
+		logWriter:      logWriter,
+		monitoring:     monitoringConfig,
+		ResponseWriter: responseWriter,
+	}
 }
 
 // WriteHeader into wrapped ResponseWriter.
@@ -67,9 +88,7 @@ func (wrapper *ResponseWrapper) GetContent() ([]byte, error) {
 
 // SetContent write data to the internal ResponseWriter buffer
 // and match initial encoding.
-func (wrapper *ResponseWrapper) SetContent(data []byte) {
-	encoding := wrapper.getContentEncoding()
-
+func (wrapper *ResponseWrapper) SetContent(data []byte, encoding string) {
 	bodyBytes, _ := compressutil.Encode(data, encoding)
 
 	if !wrapper.wroteHeader {
@@ -77,24 +96,9 @@ func (wrapper *ResponseWrapper) SetContent(data []byte) {
 	}
 
 	if _, err := wrapper.ResponseWriter.Write(bodyBytes); err != nil {
-		log.Printf("unable to write rewriten body: %v", err)
+		wrapper.logWriter.LogErrorf("unable to write rewriten body: %v", err)
 		wrapper.LogHeaders()
 	}
-}
-
-// SupportsProcessing determine if http.Request is supported by this plugin.
-func SupportsProcessing(request *http.Request) bool {
-	// Ignore non GET requests
-	if request.Method != http.MethodGet {
-		return false
-	}
-
-	if strings.Contains(request.Header.Get("Upgrade"), "websocket") {
-		// log.Printf("Ignoring websocket request for %s", request.RequestURI)
-		return false
-	}
-
-	return true
 }
 
 func (wrapper *ResponseWrapper) getHeader(headerName string) string {
@@ -103,7 +107,7 @@ func (wrapper *ResponseWrapper) getHeader(headerName string) string {
 
 // LogHeaders writes current response headers.
 func (wrapper *ResponseWrapper) LogHeaders() {
-	log.Printf("Error Headers: %v", wrapper.ResponseWriter.Header())
+	wrapper.logWriter.LogDebugf("Error Headers: %v", wrapper.ResponseWriter.Header())
 }
 
 // getContentEncoding get the Content-Encoding header value.
@@ -119,7 +123,7 @@ func (wrapper *ResponseWrapper) getContentType() string {
 // SupportsProcessing determine if HttpWrapper is supported by this plugin based on encoding.
 func (wrapper *ResponseWrapper) SupportsProcessing() bool {
 	// If content type does not match return values with false
-	if contentType := wrapper.getContentType(); contentType != "" && !strings.Contains(contentType, "text") {
+	if contentType := wrapper.getContentType(); contentType != "" && !strings.Contains(contentType, "text/html") {
 		return false
 	}
 
@@ -127,13 +131,7 @@ func (wrapper *ResponseWrapper) SupportsProcessing() bool {
 
 	// If content type is supported validate encoding as well
 	switch encoding {
-	case "gzip":
-		fallthrough
-	case "deflate":
-		fallthrough
-	case "identity":
-		fallthrough
-	case "":
+	case compressutil.Gzip, compressutil.Deflate, compressutil.Identity, "":
 		return true
 	default:
 		return false
