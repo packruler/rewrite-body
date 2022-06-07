@@ -1,5 +1,18 @@
-# github.com/packruler/plugin-utils v0.1.0
+# github.com/BurntSushi/toml v1.1.0
+## explicit
+github.com/BurntSushi/toml
+github.com/BurntSushi/toml/internal
+# github.com/davecgh/go-spew v1.1.0
+github.com/davecgh/go-spew/spew
+# github.com/packruler/plugin-utils v0.1.1
 ## explicit
 github.com/packruler/plugin-utils/compressutil
 github.com/packruler/plugin-utils/httputil
 github.com/packruler/plugin-utils/logger
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/stretchr/testify v1.7.2
+## explicit
+github.com/stretchr/testify/assert
+# gopkg.in/yaml.v3 v3.0.1
+gopkg.in/yaml.v3

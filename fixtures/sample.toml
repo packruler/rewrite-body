@@ -1,0 +1,9 @@
+[config]
+  lastModified = true
+  logLevel = 0
+  [[config.rewrites]]
+    regex = "test"
+    replacement = "test"
+  [config.monintoring]
+    types = ["text/html"]
+    methods = ["GET"]

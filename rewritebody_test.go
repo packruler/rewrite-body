@@ -145,7 +145,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 	}
 
-	defaultMonitoring := httputil.MonitoringConfig{
+	defaultMonitoring := &httputil.MonitoringConfig{
 		MonitoredTypes: []string{
 			"text/html",
 			"",
@@ -237,7 +237,7 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	defaultMonitoring := httputil.MonitoringConfig{
+	defaultMonitoring := &httputil.MonitoringConfig{
 		MonitoredTypes: []string{
 			"text/html",
 		},
@@ -260,3 +260,28 @@ func TestNew(t *testing.T) {
 		})
 	}
 }
+
+// func TestReflect(t *testing.T) {
+// 	config := Config{
+// 		LastModified:      true,
+// 		Rewrites:          []Rewrite{{Regex: "test", Replacement: "other"}},
+// 		LogLevel:          0,
+// 		MonintoringConfig: httputil.MonitoringConfig{MonitoredTypes: []string{"text/html"}, MonitoredMethods: http.MethodGet},
+// 	}
+
+// 	reflect.StructOf([]reflect.StructField{})
+
+// 	for _, test := range tests {
+// 		t.Run(test.desc, func(t *testing.T) {
+// 			config := &Config{
+// 				Rewrites:          test.rewrites,
+// 				MonintoringConfig: defaultMonitoring,
+// 			}
+
+// 			_, err := New(context.Background(), nil, config, "rewriteBody")
+// 			if test.expErr && err == nil {
+// 				t.Fatal("expected error on bad regexp format")
+// 			}
+// 		})
+// 	}
+// }

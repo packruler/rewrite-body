@@ -12,30 +12,6 @@ import (
 	"github.com/packruler/plugin-utils/logger"
 )
 
-// Rewrite holds one rewrite body configuration.
-type Rewrite struct {
-	Regex       string `json:"regex,omitempty" yaml:"regex,omitempty" toml:"regex,omitempty"`
-	Replacement string `json:"replacement,omitempty" yaml:"replacement,omitempty" toml:"replacement,omitempty"`
-}
-
-// Config holds the plugin configuration.
-type Config struct {
-	LastModified      bool                      `json:"lastModified,omitempty"`
-	Rewrites          []Rewrite                 `json:"rewrites,omitempty"`
-	LogLevel          int8                      `json:"logLevel,omitempty"`
-	MonintoringConfig httputil.MonitoringConfig `json:"monitor,omitempty"`
-}
-
-// CreateConfig creates and initializes the plugin configuration.
-func CreateConfig() *Config {
-	return &Config{}
-}
-
-type rewrite struct {
-	regex       *regexp.Regexp
-	replacement []byte
-}
-
 type rewriteBody struct {
 	name             string
 	next             http.Handler
@@ -79,7 +55,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		rewrites:         rewrites,
 		lastModified:     config.LastModified,
 		logger:           logWriter,
-		monitoringConfig: config.MonintoringConfig,
+		monitoringConfig: *config.MonintoringConfig,
 	}, nil
 }
 
