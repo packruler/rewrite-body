@@ -21,7 +21,8 @@ func TestConfigParsing(t *testing.T) {
 		t.Errorf("Unable to decode file: %v", err)
 	}
 
-	log.Printf("Decoded: %v", cfg)
+	reflection := reflect.ValueOf(cfg)
+	log.Println("Decoded: ", reflection)
 
 	cfgCopy := cfg
 	assert.Equal(t, reflect.ValueOf(cfgCopy), reflect.ValueOf(cfg))

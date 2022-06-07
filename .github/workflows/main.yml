@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - plugin-utils
     tags:
       - v*
   pull_request:
