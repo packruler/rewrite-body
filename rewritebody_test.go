@@ -10,13 +10,14 @@ import (
 	"testing"
 
 	"github.com/packruler/rewrite-body/compressutil"
+	"github.com/packruler/rewrite-body/httputil"
 )
 
 func TestServeHTTP(t *testing.T) {
 	tests := []struct {
 		desc            string
 		contentEncoding string
-		contentType     string
+		contentType     string `default:"text/html"`
 		rewrites        []Rewrite
 		lastModified    bool
 		resBody         string
@@ -144,12 +145,23 @@ func TestServeHTTP(t *testing.T) {
 		},
 	}
 
+	defaultMonitoring := &httputil.MonitoringConfig{
+		MonitoredTypes: []string{
+			"text/html",
+			"",
+		},
+		MonitoredMethods: []string{
+			http.MethodGet,
+		},
+	}
+
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			config := &Config{
-				LastModified: test.lastModified,
-				Rewrites:     test.rewrites,
-				LogLevel:     -1,
+				LastModified:      test.lastModified,
+				Rewrites:          test.rewrites,
+				LogLevel:          -1,
+				MonintoringConfig: defaultMonitoring,
 			}
 
 			next := func(responseWriter http.ResponseWriter, req *http.Request) {
@@ -181,7 +193,7 @@ func TestServeHTTP(t *testing.T) {
 			}
 
 			if !bytes.Equal([]byte(test.expResBody), recorder.Body.Bytes()) {
-				t.Errorf("got body: %s\n wanted: %s", recorder.Body.Bytes(), []byte(test.expResBody))
+				t.Errorf("got body: %v\n wanted: %v", recorder.Body.Bytes(), []byte(test.expResBody))
 			}
 		})
 	}
@@ -224,10 +236,21 @@ func TestNew(t *testing.T) {
 			expErr: true,
 		},
 	}
+
+	defaultMonitoring := &httputil.MonitoringConfig{
+		MonitoredTypes: []string{
+			"text/html",
+		},
+		MonitoredMethods: []string{
+			http.MethodGet,
+		},
+	}
+
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			config := &Config{
-				Rewrites: test.rewrites,
+				Rewrites:          test.rewrites,
+				MonintoringConfig: defaultMonitoring,
 			}
 
 			_, err := New(context.Background(), nil, config, "rewriteBody")
@@ -237,3 +260,28 @@ func TestNew(t *testing.T) {
 		})
 	}
 }
+
+// func TestReflect(t *testing.T) {
+// 	config := Config{
+// 		LastModified:      true,
+// 		Rewrites:          []Rewrite{{Regex: "test", Replacement: "other"}},
+// 		LogLevel:          0,
+// 		MonintoringConfig: httputil.MonitoringConfig{MonitoredTypes: []string{"text/html"}, MonitoredMethods: http.MethodGet},
+// 	}
+
+// 	reflect.StructOf([]reflect.StructField{})
+
+// 	for _, test := range tests {
+// 		t.Run(test.desc, func(t *testing.T) {
+// 			config := &Config{
+// 				Rewrites:          test.rewrites,
+// 				MonintoringConfig: defaultMonitoring,
+// 			}
+
+// 			_, err := New(context.Background(), nil, config, "rewriteBody")
+// 			if test.expErr && err == nil {
+// 				t.Fatal("expected error on bad regexp format")
+// 			}
+// 		})
+// 	}
+// }

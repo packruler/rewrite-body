@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 
@@ -13,35 +12,13 @@ import (
 	"github.com/packruler/rewrite-body/logger"
 )
 
-// Rewrite holds one rewrite body configuration.
-type Rewrite struct {
-	Regex       string `json:"regex,omitempty"`
-	Replacement string `json:"replacement,omitempty"`
-}
-
-// Config holds the plugin configuration.
-type Config struct {
-	LastModified bool      `json:"lastModified,omitempty"`
-	Rewrites     []Rewrite `json:"rewrites,omitempty"`
-	LogLevel     int8      `json:"logLevel,omitempty"`
-}
-
-// CreateConfig creates and initializes the plugin configuration.
-func CreateConfig() *Config {
-	return &Config{}
-}
-
-type rewrite struct {
-	regex       *regexp.Regexp
-	replacement []byte
-}
-
 type rewriteBody struct {
-	name         string
-	next         http.Handler
-	rewrites     []rewrite
-	lastModified bool
-	logger       logger.LogWriter
+	name             string
+	next             http.Handler
+	rewrites         []rewrite
+	lastModified     bool
+	logger           logger.LogWriter
+	monitoringConfig httputil.MonitoringConfig
 }
 
 // New creates and returns a new rewrite body plugin instance.
@@ -73,19 +50,21 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 	logWriter := *logger.CreateLogger(logger.LogLevel(config.LogLevel))
 
 	return &rewriteBody{
-		name:         name,
-		next:         next,
-		rewrites:     rewrites,
-		lastModified: config.LastModified,
-		logger:       logWriter,
+		name:             name,
+		next:             next,
+		rewrites:         rewrites,
+		lastModified:     config.LastModified,
+		logger:           logWriter,
+		monitoringConfig: *config.MonintoringConfig,
 	}, nil
 }
 
 func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *http.Request) {
-	defer handlePanic()
+	defer bodyRewrite.handlePanic()
 
+	wrappedRequest := httputil.WrapRequest(req, bodyRewrite.monitoringConfig, bodyRewrite.logger)
 	// allow default http.ResponseWriter to handle calls targeting WebSocket upgrades and non GET methods
-	if !httputil.SupportsProcessing(req) {
+	if !wrappedRequest.SupportsProcessing() {
 		bodyRewrite.logger.LogDebugf("Ignoring unsupported request: %v", req)
 		bodyRewrite.next.ServeHTTP(response, req)
 
@@ -94,14 +73,17 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	bodyRewrite.logger.LogDebugf("Starting supported request: %v", req)
 
-	wrappedWriter := &httputil.ResponseWrapper{
-		ResponseWriter: response,
-	}
+	wrappedWriter := httputil.WrapWriter(
+		response,
+		bodyRewrite.monitoringConfig,
+		bodyRewrite.logger,
+		bodyRewrite.lastModified,
+	)
 
 	wrappedWriter.SetLastModified(bodyRewrite.lastModified)
 
 	// look into using https://pkg.go.dev/net/http#RoundTripper
-	bodyRewrite.next.ServeHTTP(wrappedWriter, req)
+	bodyRewrite.next.ServeHTTP(wrappedWriter, wrappedRequest.CloneWithSupportedEncoding())
 
 	if !wrappedWriter.SupportsProcessing() {
 		// We are ignoring these any errors because the content should be unchanged here.
@@ -135,24 +117,26 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 	}
 
 	bodyRewrite.logger.LogDebugf("Transformed body: %s", bodyBytes)
-	wrappedWriter.SetContent(bodyBytes)
+
+	encoding := wrappedWriter.Header().Get("Content-Encoding")
+	wrappedWriter.SetContent(bodyBytes, encoding)
 }
 
-func handlePanic() {
+func (bodyRewrite *rewriteBody) handlePanic() {
 	if recovery := recover(); recovery != nil {
 		if err, ok := recovery.(error); ok {
-			logError(err)
+			bodyRewrite.logError(err)
 		} else {
-			log.Printf("Unhandled error: %v", recovery)
+			bodyRewrite.logger.LogWarningf("Unhandled error: %v", recovery)
 		}
 	}
 }
 
-func logError(err error) {
+func (bodyRewrite *rewriteBody) logError(err error) {
 	// Ignore http.ErrAbortHandler because they are expected errors that do not require handling
 	if errors.Is(err, http.ErrAbortHandler) {
 		return
 	}
 
-	log.Printf("Recovered from: %v", err)
+	bodyRewrite.logger.LogWarningf("Recovered from: %v", err)
 }
