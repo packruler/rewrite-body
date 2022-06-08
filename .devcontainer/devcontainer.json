@@ -44,5 +44,6 @@
 	"remoteUser": "vscode",
 	"features": {
 		"git": "latest"
-	}
+	},
+	"workspaceFolder": "/go/src/github.com"
 }
