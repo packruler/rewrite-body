@@ -17,5 +17,8 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 USER vscode
 RUN go install mvdan.cc/gofumpt@latest
 
+ENV YAEGI_VERSION="v0.9.20"
+RUN curl -sfL https://raw.githubusercontent.com/traefik/yaegi/master/install.sh | bash -s -- -b $(go env GOPATH)/bin ${YAEGI_VERSION}
+
 # [Optional] Uncomment this line to install global node packages.
 # RUN su vscode -c "source /usr/local/share/nvm/nvm.sh && npm install -g <your-package-here>" 2>&1

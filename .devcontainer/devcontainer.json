@@ -45,5 +45,6 @@
 	"features": {
 		"git": "latest"
 	},
-	"workspaceFolder": "/go/src/github.com"
+	"workspaceMount": "source=${localWorkspaceFolder},target=/go/src/github.com/${localWorkspaceFolderBasename},type=bind,consistency=cached",
+	"workspaceFolder": "/go/src/github.com/${localWorkspaceFolderBasename}"
 }
