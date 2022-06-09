@@ -145,7 +145,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 	}
 
-	defaultMonitoring := &httputil.MonitoringConfig{
+	defaultMonitoring := httputil.MonitoringConfig{
 		MonitoredTypes: []string{
 			"text/html",
 			"",
@@ -237,7 +237,7 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	defaultMonitoring := &httputil.MonitoringConfig{
+	defaultMonitoring := httputil.MonitoringConfig{
 		MonitoredTypes: []string{
 			"text/html",
 		},

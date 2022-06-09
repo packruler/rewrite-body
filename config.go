@@ -10,18 +10,18 @@ import (
 
 // Rewrite holds one rewrite body configuration.
 type Rewrite struct {
-	Regex       string `json:"regex,omitempty" yaml:"regex,omitempty" toml:"regex,omitempty" export:"true"`
-	Replacement string `json:"replacement,omitempty" yaml:"replacement,omitempty" toml:"replacement,omitempty" export:"true"`
+	Regex       string `json:"regex" yaml:"regex" toml:"regex" export:"true"`
+	Replacement string `json:"replacement" yaml:"replacement" toml:"replacement" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // Config holds the plugin configuration.
 type Config struct {
-	LastModified      bool                       `json:"lastModified,omitempty" toml:"lastModified,omitempty" yaml:"lastModified,omitempty" export:"true"`
-	Rewrites          []Rewrite                  `json:"rewrites,omitempty" toml:"rewrites,omitempty" yaml:"rewrites,omitempty" export:"true"`
-	LogLevel          int8                       `json:"logLevel,omitempty" toml:"logLevel,omitempty" yaml:"logLevel,omitempty" export:"true"`
-	MonintoringConfig *httputil.MonitoringConfig `json:"monitor,omitempty" toml:"monitor,omitempty" yaml:"monitor,omitempty" export:"true"`
+	LastModified      bool                      `json:"lastModified" toml:"lastModified" yaml:"lastModified" export:"true"`
+	Rewrites          []Rewrite                 `json:"rewrites" toml:"rewrites" yaml:"rewrites" export:"true"`
+	LogLevel          int8                      `json:"logLevel" toml:"logLevel" yaml:"logLevel" export:"true"`
+	MonintoringConfig httputil.MonitoringConfig `json:"monitor" toml:"monitor" yaml:"monitor" export:"true"`
 }
 
 // CreateConfig creates and initializes the plugin configuration.

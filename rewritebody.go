@@ -3,8 +3,10 @@ package rewrite_body
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 
@@ -23,6 +25,8 @@ type rewriteBody struct {
 
 // New creates and returns a new rewrite body plugin instance.
 func New(_ context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+	_ = prettyPrint(config)
+
 	rewrites := make([]rewrite, len(config.Rewrites))
 
 	for index, rewriteConfig := range config.Rewrites {
@@ -55,7 +59,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		rewrites:         rewrites,
 		lastModified:     config.LastModified,
 		logger:           logWriter,
-		monitoringConfig: *config.MonintoringConfig,
+		monitoringConfig: config.MonintoringConfig,
 	}, nil
 }
 
@@ -139,4 +143,15 @@ func (bodyRewrite *rewriteBody) logError(err error) {
 	}
 
 	bodyRewrite.logger.LogWarningf("Recovered from: %v", err)
+}
+
+func prettyPrint(v interface{}) (err error) {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	log.Println(string(b))
+
+	return nil
 }
