@@ -151,18 +151,12 @@ func TestServeHTTP(t *testing.T) {
 		},
 	}
 
-	defaultMonitoring := monitoringStrings{
-		Types:   "other, text/html",
-		Methods: http.MethodGet,
-	}
-
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			config := &Config{
-				LastModified:      test.lastModified,
-				Rewrites:          test.rewrites,
-				LogLevel:          -1,
-				MonitoringStrings: defaultMonitoring,
+				LastModified: test.lastModified,
+				Rewrites:     test.rewrites,
+				LogLevel:     -1,
 			}
 
 			next := func(responseWriter http.ResponseWriter, req *http.Request) {
