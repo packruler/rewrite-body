@@ -8,8 +8,8 @@ import (
 // MonitoringConfig structure of data for handling configuration for
 // controlling what content is monitored.
 type MonitoringConfig struct {
-	MonitoredTypes   []string `json:"types,omitempty" yaml:"types,omitempty" toml:"types,omitempty" export:"true"`
-	MonitoredMethods []string `json:"methods,omitempty" yaml:"methods,omitempty" toml:"methods,omitempty" export:"true"`
+	Types   []string `json:"types,omitempty" yaml:"types,omitempty" toml:"types,omitempty" export:"true"`
+	Methods []string `json:"methods,omitempty" yaml:"methods,omitempty" toml:"methods,omitempty" export:"true"`
 }
 
 // ParseMonitoringConfig parse types and methods strings into MonitoringConfig.
@@ -37,7 +37,7 @@ func ParseMonitoringConfig(types string, methods string) MonitoringConfig {
 	}
 
 	return MonitoringConfig{
-		MonitoredTypes:   typesArray,
-		MonitoredMethods: methodsArray,
+		Types:   typesArray,
+		Methods: methodsArray,
 	}
 }

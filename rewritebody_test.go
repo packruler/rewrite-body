@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/packruler/plugin-utils/compressutil"
-	"github.com/packruler/plugin-utils/httputil"
 )
 
 func TestServeHTTP(t *testing.T) {
@@ -32,8 +31,9 @@ func TestServeHTTP(t *testing.T) {
 					Replacement: "bar",
 				},
 			},
-			resBody:    "foo is the new bar",
-			expResBody: "bar is the new bar",
+			contentType: "text/html",
+			resBody:     "foo is the new bar",
+			expResBody:  "bar is the new bar",
 		},
 		{
 			desc: "should replace foo by bar, then by foo",
@@ -47,8 +47,9 @@ func TestServeHTTP(t *testing.T) {
 					Replacement: "foo",
 				},
 			},
-			resBody:    "foo is the new bar",
-			expResBody: "foo is the new foo",
+			contentType: "text/html",
+			resBody:     "foo is the new bar",
+			expResBody:  "foo is the new foo",
 		},
 		{
 			desc: "should not replace anything if content encoding is not identity or empty",
@@ -59,6 +60,7 @@ func TestServeHTTP(t *testing.T) {
 				},
 			},
 			contentEncoding: "other",
+			contentType:     "text/html",
 			resBody:         "foo is the new bar",
 			expResBody:      "foo is the new bar",
 		},
@@ -96,6 +98,7 @@ func TestServeHTTP(t *testing.T) {
 				},
 			},
 			contentEncoding: "identity",
+			contentType:     "text/html",
 			lastModified:    true,
 			resBody:         "foo is the new bar",
 			expResBody:      "bar is the new bar",
@@ -110,6 +113,7 @@ func TestServeHTTP(t *testing.T) {
 				},
 			},
 			contentEncoding: "gzip",
+			contentType:     "text/html",
 			lastModified:    true,
 			resBody:         compressString("foo is the new bar", "gzip"),
 			expResBody:      compressString("bar is the new bar", "gzip"),
@@ -124,6 +128,7 @@ func TestServeHTTP(t *testing.T) {
 				},
 			},
 			contentEncoding: "deflate",
+			contentType:     "text/html",
 			lastModified:    true,
 			resBody:         compressString("foo is the new bar", "deflate"),
 			expResBody:      compressString("bar is the new bar", "deflate"),
@@ -138,6 +143,7 @@ func TestServeHTTP(t *testing.T) {
 				},
 			},
 			contentEncoding: "br",
+			contentType:     "text/html",
 			lastModified:    true,
 			resBody:         "foo is the new bar",
 			expResBody:      "foo is the new bar",
@@ -145,14 +151,9 @@ func TestServeHTTP(t *testing.T) {
 		},
 	}
 
-	defaultMonitoring := httputil.MonitoringConfig{
-		MonitoredTypes: []string{
-			"text/html",
-			"",
-		},
-		MonitoredMethods: []string{
-			http.MethodGet,
-		},
+	defaultMonitoring := monitoringStrings{
+		Types:   "other, text/html",
+		Methods: http.MethodGet,
 	}
 
 	for _, test := range tests {
@@ -161,7 +162,7 @@ func TestServeHTTP(t *testing.T) {
 				LastModified:      test.lastModified,
 				Rewrites:          test.rewrites,
 				LogLevel:          -1,
-				MonintoringConfig: defaultMonitoring,
+				MonitoringStrings: defaultMonitoring,
 			}
 
 			next := func(responseWriter http.ResponseWriter, req *http.Request) {
@@ -181,6 +182,7 @@ func TestServeHTTP(t *testing.T) {
 
 			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Header.Set("Accept", "text/html")
 
 			rewriteBody.ServeHTTP(recorder, req)
 
@@ -237,20 +239,16 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	defaultMonitoring := httputil.MonitoringConfig{
-		MonitoredTypes: []string{
-			"text/html",
-		},
-		MonitoredMethods: []string{
-			http.MethodGet,
-		},
+	defaultMonitoring := monitoringStrings{
+		Types:   "text/html",
+		Methods: http.MethodGet,
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			config := &Config{
 				Rewrites:          test.rewrites,
-				MonintoringConfig: defaultMonitoring,
+				MonitoringStrings: defaultMonitoring,
 			}
 
 			_, err := New(context.Background(), nil, config, "rewriteBody")
@@ -260,28 +258,3 @@ func TestNew(t *testing.T) {
 		})
 	}
 }
-
-// func TestReflect(t *testing.T) {
-// 	config := Config{
-// 		LastModified:      true,
-// 		Rewrites:          []Rewrite{{Regex: "test", Replacement: "other"}},
-// 		LogLevel:          0,
-// 		MonintoringConfig: httputil.MonitoringConfig{MonitoredTypes: []string{"text/html"}, MonitoredMethods: http.MethodGet},
-// 	}
-
-// 	reflect.StructOf([]reflect.StructField{})
-
-// 	for _, test := range tests {
-// 		t.Run(test.desc, func(t *testing.T) {
-// 			config := &Config{
-// 				Rewrites:          test.rewrites,
-// 				MonintoringConfig: defaultMonitoring,
-// 			}
-
-// 			_, err := New(context.Background(), nil, config, "rewriteBody")
-// 			if test.expErr && err == nil {
-// 				t.Fatal("expected error on bad regexp format")
-// 			}
-// 		})
-// 	}
-// }

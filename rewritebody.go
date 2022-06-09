@@ -25,8 +25,6 @@ type rewriteBody struct {
 
 // New creates and returns a new rewrite body plugin instance.
 func New(_ context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	_ = prettyPrint(config)
-
 	rewrites := make([]rewrite, len(config.Rewrites))
 
 	for index, rewriteConfig := range config.Rewrites {
@@ -53,14 +51,18 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 
 	logWriter := *logger.CreateLogger(logger.LogLevel(config.LogLevel))
 
-	return &rewriteBody{
+	result := &rewriteBody{
 		name:             name,
 		next:             next,
 		rewrites:         rewrites,
 		lastModified:     config.LastModified,
 		logger:           logWriter,
-		monitoringConfig: config.MonintoringConfig,
-	}, nil
+		monitoringConfig: httputil.ParseMonitoringConfig(config.MonitoringStrings.Types, config.MonitoringStrings.Methods),
+	}
+
+	_ = prettyPrint(result)
+
+	return result, nil
 }
 
 func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *http.Request) {

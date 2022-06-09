@@ -132,7 +132,7 @@ func (req *RequestWrapper) SupportsProcessing() bool {
 	acceptHeader := req.Header.Get("Accept")
 	isSupported := false
 
-	for _, monitoredType := range req.monitoring.MonitoredTypes {
+	for _, monitoredType := range req.monitoring.Types {
 		if strings.Contains(acceptHeader, monitoredType) {
 			isSupported = true
 		}
@@ -145,7 +145,7 @@ func (req *RequestWrapper) SupportsProcessing() bool {
 	isSupported = false
 
 	// Ignore non GET requests
-	for _, monitoredMethod := range req.monitoring.MonitoredMethods {
+	for _, monitoredMethod := range req.monitoring.Methods {
 		if strings.Contains(req.Method, monitoredMethod) {
 			isSupported = true
 		}
