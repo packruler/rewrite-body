@@ -4,6 +4,6 @@
   [[config.rewrites]]
     regex = "test"
     replacement = "test"
-  [config.monintoring]
+  [config.monitor]
     types = ["text/html"]
     methods = ["GET"]
