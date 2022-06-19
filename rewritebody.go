@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/packruler/plugin-utils/httputil"
-	"github.com/packruler/plugin-utils/logger"
+	"github.com/packruler/rewrite-body/httputil"
+	"github.com/packruler/rewrite-body/logger"
 )
 
 type rewriteBody struct {
@@ -51,13 +51,15 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 
 	logWriter := *logger.CreateLogger(logger.LogLevel(config.LogLevel))
 
+	config.Monitoring.EnsureDefaults()
+
 	result := &rewriteBody{
 		name:             name,
 		next:             next,
 		rewrites:         rewrites,
 		lastModified:     config.LastModified,
 		logger:           logWriter,
-		monitoringConfig: httputil.ParseMonitoringConfig(config.MonitoringStrings.Types, config.MonitoringStrings.Methods),
+		monitoringConfig: config.Monitoring,
 	}
 
 	_ = prettyPrint(result)

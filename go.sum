@@ -1,4 +1,4 @@
-github.com/packruler/plugin-utils v0.1.4 h1:0JlKMJW7od3DCybLazMBejapOjIdgpwer/BtPqqXDmM=
-github.com/packruler/plugin-utils v0.1.4/go.mod h1:QZdekGTvGSTiaWN5PR/dB91IccNbtClM2jpuwqOG4cg=
-github.com/packruler/plugin-utils v0.1.5 h1:Z5/uT2I2rJ/9zJWSRMuXbIIt8ETDkv/aCl+OgVObpaI=
-github.com/packruler/plugin-utils v0.1.5/go.mod h1:QZdekGTvGSTiaWN5PR/dB91IccNbtClM2jpuwqOG4cg=
+github.com/packruler/rewrite-body v0.1.4 h1:0JlKMJW7od3DCybLazMBejapOjIdgpwer/BtPqqXDmM=
+github.com/packruler/rewrite-body v0.1.4/go.mod h1:QZdekGTvGSTiaWN5PR/dB91IccNbtClM2jpuwqOG4cg=
+github.com/packruler/rewrite-body v0.1.5 h1:Z5/uT2I2rJ/9zJWSRMuXbIIt8ETDkv/aCl+OgVObpaI=
+github.com/packruler/rewrite-body v0.1.5/go.mod h1:QZdekGTvGSTiaWN5PR/dB91IccNbtClM2jpuwqOG4cg=

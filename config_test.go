@@ -10,7 +10,7 @@ package rewrite_body
 // 	"testing"
 
 // 	"github.com/BurntSushi/toml"
-// 	"github.com/packruler/plugin-utils/httputil"
+// 	"github.com/packruler/rewrite-body/httputil"
 // 	"github.com/stretchr/testify/assert"
 // 	"gopkg.in/yaml.v3"
 // )

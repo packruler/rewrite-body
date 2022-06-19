@@ -2,6 +2,8 @@ package rewrite_body
 
 import (
 	"regexp"
+
+	"github.com/packruler/rewrite-body/httputil"
 )
 
 // Rewrite holds one rewrite body configuration.
@@ -10,17 +12,17 @@ type Rewrite struct {
 	Replacement string `json:"replacement" yaml:"replacement" toml:"replacement"`
 }
 
-type monitoringStrings struct {
-	Types   string `json:"types,omitempty" yaml:"types,omitempty" toml:"types,omitempty" export:"true"`
-	Methods string `json:"methods,omitempty" yaml:"methods,omitempty" toml:"methods,omitempty" export:"true"`
-}
+// type MonitoringStrings struct {
+// 	Types   []string `json:"types" yaml:"types" toml:"types"`
+// 	Methods []string `json:"methods" yaml:"methods" toml:"methods"`
+// }
 
 // Config holds the plugin configuration.
 type Config struct {
-	LastModified      bool              `json:"lastModified" toml:"lastModified" yaml:"lastModified"`
-	Rewrites          []Rewrite         `json:"rewrites" toml:"rewrites" yaml:"rewrites"`
-	LogLevel          int8              `json:"logLevel" toml:"logLevel" yaml:"logLevel"`
-	MonitoringStrings monitoringStrings `json:"monitor" toml:"monitor" yaml:"monitor"`
+	LastModified bool                      `json:"lastModified" toml:"lastModified" yaml:"lastModified"`
+	Rewrites     []Rewrite                 `json:"rewrites" toml:"rewrites" yaml:"rewrites"`
+	LogLevel     int8                      `json:"logLevel" toml:"logLevel" yaml:"logLevel"`
+	Monitoring   httputil.MonitoringConfig `json:"monitoring" toml:"monitoring" yaml:"monitoring"`
 }
 
 // CreateConfig creates and initializes the plugin configuration.
