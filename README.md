@@ -43,7 +43,7 @@ experimental:
     plugins:
         rewrite-body:
             moduleName: "github.com/packruler/rewrite-body"
-            version: "v1.0.1"
+            version: "v2.0.0"
 ```
 
 ### Dynamic
@@ -77,8 +77,21 @@ http:
               replacement: "bar"
 
           # logLevel is optional, defaults to Info level.
-          # Available logLevels: (Trace: -1, Debug: 1, Info: 2, Warning: 3, Error: 4)
-          logLevel: 2
+          # Available logLevels: (Trace: -2, Debug: -1, Info: 0, Warning: 1, Error: 2)
+          logLevel: 0
+
+          # monitoring is optional, defaults to below configuration
+          # monitoring configuration limits the HTTP queries that are checked for regex replacement.
+          monitoring:
+            # methods is a string list. Options are standard HTTP Methods. Entries MUST be ALL CAPS
+            # For a list of options: https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+            methods:
+              - GET
+            # types is a string list. Options are HTTP Content Types. Entries should match standard formatting
+            # For a list of options: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
+            # Wildcards(*) are not supported!
+            types:
+              - text/html
   services:
     my-service:
       loadBalancer:
