@@ -67,3 +67,7 @@ issues:
         - goconst
         - funlen
         - godot
+        - lll
+    - path: config.go
+      linters:
+        - lll
