@@ -39,16 +39,6 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		}
 	}
 
-	switch config.LogLevel {
-	// Convert default 0 to Info level
-	case 0:
-		config.LogLevel = int8(logger.Info)
-	// Allow -1 to be call for Trace level
-	case -1:
-		config.LogLevel = int8(logger.Trace)
-	default:
-	}
-
 	logWriter := *logger.CreateLogger(logger.LogLevel(config.LogLevel))
 
 	config.Monitoring.EnsureDefaults()
