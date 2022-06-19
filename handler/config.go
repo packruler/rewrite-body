@@ -1,4 +1,4 @@
-package rewrite_body
+package handler
 
 import (
 	"regexp"

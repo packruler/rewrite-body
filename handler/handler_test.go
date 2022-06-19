@@ -1,4 +1,4 @@
-package rewrite_body
+package handler
 
 import (
 	"bytes"
@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/packruler/rewrite-body/compressutil"
-	"github.com/packruler/rewrite-body/handler"
 	"github.com/packruler/rewrite-body/httputil"
 )
 
@@ -19,7 +18,7 @@ func TestServeHTTP(t *testing.T) {
 		desc            string
 		contentEncoding string
 		contentType     string `default:"text/html"`
-		rewrites        []handler.Rewrite
+		rewrites        []Rewrite
 		lastModified    bool
 		resBody         string
 		expResBody      string
@@ -27,7 +26,7 @@ func TestServeHTTP(t *testing.T) {
 	}{
 		{
 			desc: "should replace foo by bar",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -39,7 +38,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should replace foo by bar, then by foo",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -55,7 +54,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should not replace anything if content encoding is not identity or empty",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -68,7 +67,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should not replace anything if content type does not contain text or is not empty",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -80,7 +79,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should replace foo by bar if content encoding is identity",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -93,7 +92,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should not remove the last modified header",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -108,7 +107,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should support gzip encoding",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -123,7 +122,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should support deflate encoding",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -138,7 +137,7 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should ignore unsupported encoding",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -155,7 +154,7 @@ func TestServeHTTP(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			config := &handler.Config{
+			config := &Config{
 				LastModified: test.lastModified,
 				Rewrites:     test.rewrites,
 				LogLevel:     -1,
@@ -206,12 +205,12 @@ func compressString(value string, encoding string) string {
 func TestNew(t *testing.T) {
 	tests := []struct {
 		desc     string
-		rewrites []handler.Rewrite
+		rewrites []Rewrite
 		expErr   bool
 	}{
 		{
 			desc: "should return no error",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "foo",
 					Replacement: "bar",
@@ -225,7 +224,7 @@ func TestNew(t *testing.T) {
 		},
 		{
 			desc: "should return an error",
-			rewrites: []handler.Rewrite{
+			rewrites: []Rewrite{
 				{
 					Regex:       "*",
 					Replacement: "bar",
@@ -242,7 +241,7 @@ func TestNew(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			config := &handler.Config{
+			config := &Config{
 				Rewrites:   test.rewrites,
 				Monitoring: defaultMonitoring,
 			}
