@@ -12,11 +12,6 @@ type Rewrite struct {
 	Replacement string `json:"replacement" yaml:"replacement" toml:"replacement"`
 }
 
-// type MonitoringStrings struct {
-// 	Types   []string `json:"types" yaml:"types" toml:"types"`
-// 	Methods []string `json:"methods" yaml:"methods" toml:"methods"`
-// }
-
 // Config holds the plugin configuration.
 type Config struct {
 	LastModified bool                      `json:"lastModified" toml:"lastModified" yaml:"lastModified"`
