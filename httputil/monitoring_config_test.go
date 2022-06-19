@@ -9,75 +9,68 @@ import (
 
 func TestMonitoringConfigParsing(t *testing.T) {
 	tests := []struct {
-		desc            string
-		inputTypes      []string
-		inputMethods    []string
-		expectedTypes   []string
-		expectedMethods []string
+		desc           string
+		inputConfig    httputil.MonitoringConfig
+		expectedConfig httputil.MonitoringConfig
 	}{
 		{
-			desc:            "defaults will be supplied for empty arrays",
-			inputTypes:      []string{},
-			inputMethods:    []string{},
-			expectedTypes:   []string{"text/html"},
-			expectedMethods: []string{http.MethodGet},
+			desc: "defaults will be supplied for empty arrays",
+			inputConfig: httputil.MonitoringConfig{
+				Types:   []string{},
+				Methods: []string{},
+			},
+			expectedConfig: httputil.MonitoringConfig{
+				Types:   []string{"text/html"},
+				Methods: []string{http.MethodGet},
+			},
 		},
-		// {
-		// 	desc:            "defaults will be supplied for empty types with populated methods",
-		// 	inputTypes:      "",
-		// 	inputMethods:    "POST",
-		// 	expectedTypes:   []string{"text/html"},
-		// 	expectedMethods: []string{http.MethodPost},
-		// },
-		// {
-		// 	desc:            "defaults will be supplied for empty methods with populated types",
-		// 	inputTypes:      "application/json",
-		// 	inputMethods:    "",
-		// 	expectedTypes:   []string{"application/json"},
-		// 	expectedMethods: []string{http.MethodGet},
-		// },
-		// {
-		// 	desc:            "proper cases will be used",
-		// 	inputTypes:      "TEXT/HTml",
-		// 	inputMethods:    "gEt",
-		// 	expectedTypes:   []string{"text/html"},
-		// 	expectedMethods: []string{http.MethodGet},
-		// },
-		// {
-		// 	desc:            "works with multiple values",
-		// 	inputTypes:      "text/html, application/json",
-		// 	inputMethods:    "get, post",
-		// 	expectedTypes:   []string{"text/html", "application/json"},
-		// 	expectedMethods: []string{http.MethodGet, http.MethodPost},
-		// },
+		{
+			desc: "defaults will be supplied for empty types with populated methods",
+			inputConfig: httputil.MonitoringConfig{
+				Types:   []string{},
+				Methods: []string{"POST"},
+			},
+			expectedConfig: httputil.MonitoringConfig{
+				Types:   []string{"text/html"},
+				Methods: []string{http.MethodPost},
+			},
+		},
+		{
+			desc: "defaults will be supplied for populated types with empty methods",
+			inputConfig: httputil.MonitoringConfig{
+				Types:   []string{"application/json"},
+				Methods: []string{},
+			},
+			expectedConfig: httputil.MonitoringConfig{
+				Types:   []string{"application/json"},
+				Methods: []string{http.MethodGet},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			config := httputil.MonitoringConfig{
-				Types:   test.inputTypes,
-				Methods: test.inputMethods,
-			}
+			config := test.inputConfig
 
 			config.EnsureDefaults()
 
-			if len(config.Types) != len(test.expectedTypes) {
-				t.Errorf("Expected Types: '%v' | Got Types: '%v'", test.expectedTypes, config.Types)
+			if len(config.Types) != len(test.expectedConfig.Types) {
+				t.Errorf("Expected Types: '%v' | Got Types: '%v'", test.expectedConfig.Types, config.Types)
 			}
 
-			for i, v := range test.expectedTypes {
+			for i, v := range test.expectedConfig.Types {
 				if v != config.Types[i] {
-					t.Errorf("Expected Types: '%v' | Got Types: '%v'", test.expectedTypes, config.Types)
+					t.Errorf("Expected Types: '%v' | Got Types: '%v'", test.expectedConfig.Types, config.Types)
 				}
 			}
 
-			if len(config.Methods) != len(test.expectedMethods) {
-				t.Errorf("Expected Methods: '%v' | Got Methods: '%v'", test.expectedMethods, config.Methods)
+			if len(config.Methods) != len(test.expectedConfig.Methods) {
+				t.Errorf("Expected Methods: '%v' | Got Methods: '%v'", test.expectedConfig.Methods, config.Methods)
 			}
 
-			for i, v := range test.expectedMethods {
+			for i, v := range test.expectedConfig.Methods {
 				if v != config.Methods[i] {
-					t.Errorf("Expected Methods: '%v' | Got Methods: '%v'", test.expectedMethods, config.Methods)
+					t.Errorf("Expected Methods: '%v' | Got Methods: '%v'", test.expectedConfig.Methods, config.Methods)
 				}
 			}
 		})
