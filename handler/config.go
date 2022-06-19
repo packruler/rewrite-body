@@ -20,11 +20,6 @@ type Config struct {
 	Monitoring   httputil.MonitoringConfig `json:"monitoring" toml:"monitoring" yaml:"monitoring"`
 }
 
-// CreateConfig creates and initializes the plugin configuration.
-func CreateConfig() *Config {
-	return &Config{}
-}
-
 type rewrite struct {
 	regex       *regexp.Regexp
 	replacement []byte

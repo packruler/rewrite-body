@@ -134,14 +134,3 @@ func (bodyRewrite *rewriteBody) logError(err error) {
 
 	bodyRewrite.logger.LogWarningf("Recovered from: %v", err)
 }
-
-// func prettyPrint(v interface{}) (err error) {
-// 	b, err := json.MarshalIndent(v, "", "  ")
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	log.Println(string(b))
-
-// 	return nil
-// }
