@@ -122,8 +122,19 @@ func (wrapper *ResponseWrapper) getContentType() string {
 
 // SupportsProcessing determine if HttpWrapper is supported by this plugin based on encoding.
 func (wrapper *ResponseWrapper) SupportsProcessing() bool {
+	foundContentType := false
+
 	// If content type does not match return values with false
-	if contentType := wrapper.getContentType(); contentType != "" && !strings.Contains(contentType, "text/html") {
+	contentType := wrapper.getContentType()
+	for _, monitoredType := range wrapper.monitoring.Types {
+		if strings.Contains(contentType, monitoredType) {
+			foundContentType = true
+
+			break
+		}
+	}
+
+	if !foundContentType {
 		return false
 	}
 
