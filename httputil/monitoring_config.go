@@ -18,4 +18,21 @@ func (config *MonitoringConfig) EnsureDefaults() {
 	if len(config.Types) == 0 {
 		config.Types = []string{"text/html"}
 	}
+
+	// handle mangled/flattened monitoring config
+	if len(config.Methods) == 1 {
+		for _, configMethod := range config.Methods {
+			if strings.Contains(configMethod,"║") {
+				config.Methods = strings.Split(strings.ReplaceAll(configMethod,"║24║",""),"║")
+			}
+		}
+	}
+
+	if len(config.Types) == 1 {
+		for _, configType := range config.Types {
+			if strings.Contains(configType,"║") {
+				config.Types = strings.Split(strings.ReplaceAll(configType,"║24║",""),"║")
+			}
+		}
+	}
 }
