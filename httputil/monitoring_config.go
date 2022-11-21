@@ -1,6 +1,7 @@
 package httputil
 
 import "net/http"
+import "strings"
 
 // MonitoringConfig structure of data for handling configuration for
 // controlling what content is monitored.
