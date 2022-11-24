@@ -40,6 +40,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 	logWriter := *logger.CreateLogger(logger.LogLevel(config.LogLevel))
 
 	config.Monitoring.EnsureDefaults()
+	config.Monitoring.EnsureProperFormat()
 
 	result := &rewriteBody{
 		name:             name,

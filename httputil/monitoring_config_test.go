@@ -46,6 +46,17 @@ func TestMonitoringConfigParsing(t *testing.T) {
 				Methods: []string{http.MethodGet},
 			},
 		},
+		{
+			desc: "handle weird yaml parsing",
+			inputConfig: httputil.MonitoringConfig{
+				Types:   []string{"║24║application/javascript║application/json"},
+				Methods: []string{},
+			},
+			expectedConfig: httputil.MonitoringConfig{
+				Types:   []string{"application/javascript", "application/json"},
+				Methods: []string{http.MethodGet},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -53,6 +64,7 @@ func TestMonitoringConfigParsing(t *testing.T) {
 			config := test.inputConfig
 
 			config.EnsureDefaults()
+			config.EnsureProperFormat()
 
 			if len(config.Types) != len(test.expectedConfig.Types) {
 				t.Errorf("Expected Types: '%v' | Got Types: '%v'", test.expectedConfig.Types, config.Types)
