@@ -3,6 +3,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -50,6 +51,10 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		logger:           logWriter,
 		monitoringConfig: config.Monitoring,
 	}
+
+	data, _ := json.Marshal(config)
+
+	logWriter.LogDebugf("Initial config: %v", string(data))
 
 	return result, nil
 }
