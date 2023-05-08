@@ -3,7 +3,7 @@ package handler
 import (
 	"regexp"
 
-	"github.com/packruler/rewrite-body/httputil"
+	"github.com/joinrepublic/traefik-rewrite-body-csp/httputil"
 )
 
 type nonceGenerator func(string) []byte

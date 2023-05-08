@@ -1,3 +1,3 @@
-module github.com/packruler/rewrite-body
+module github.com/joinrepublic/traefik-rewrite-body-csp
 
 go 1.16

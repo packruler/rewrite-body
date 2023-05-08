@@ -5,7 +5,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/packruler/rewrite-body/handler"
+	"github.com/joinrepublic/traefik-rewrite-body-csp/handler"
 )
 
 // CreateConfig creates and initializes the plugin configuration.
