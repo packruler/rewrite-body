@@ -16,7 +16,7 @@ import (
 type rewriteBody struct {
 	name             string
 	next             http.Handler
-	rewrites         []rewrite
+	rewrites         rewrite
 	lastModified     bool
 	logger           logger.LogWriter
 	monitoringConfig httputil.MonitoringConfig
@@ -24,8 +24,6 @@ type rewriteBody struct {
 
 // New creates and returns a new rewrite body plugin instance.
 func New(_ context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	rewrites := make([]rewrite, 1)
-
         regex, err := regexp.Compile(config.Placeholder)
         if err != nil {
                 return nil, fmt.Errorf("error compiling regex %q: %w", config.Placeholder, err)
@@ -41,7 +39,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
           generateNonce = config.NonceGenerator
         }
 
-        rewrites[0] = rewrite{
+        rewrites := rewrite{
                 regex:       regex,
                 generateNonce: generateNonce,
         }
@@ -86,8 +84,8 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		bodyRewrite.monitoringConfig,
 		bodyRewrite.logger,
 		bodyRewrite.lastModified,
-                bodyRewrite.rewrites[0].regex,
-                bodyRewrite.rewrites[0].generateNonce,
+                bodyRewrite.rewrites.regex,
+                bodyRewrite.rewrites.generateNonce,
 	)
 
 	bodyRewrite.logger.LogDebugf("Rewriting CSP! %v", wrappedWriter.GetHeader("content-security-policy"))
@@ -129,10 +127,8 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
         nonce := wrappedWriter.GetHeader("csp-nonce-value")
 
-	for _, rwt := range bodyRewrite.rewrites {
-                replacement := rwt.generateNonce(nonce)
-		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, replacement)
-	}
+        replacement := bodyRewrite.rewrites.generateNonce(nonce)
+        bodyBytes = bodyRewrite.rewrites.regex.ReplaceAll(bodyBytes, replacement)
 
 	bodyRewrite.logger.LogDebugf("Transformed body: %s", bodyBytes)
 
