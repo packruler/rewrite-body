@@ -121,7 +121,8 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 	}
 
 	for _, rwt := range bodyRewrite.rewrites {
-                replacement := rwt.generateNonce("TODO: pass nonce")
+                nonce := generateNonceString()
+                replacement := rwt.generateNonce(nonce)
 		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, replacement)
 	}
 
