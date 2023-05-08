@@ -120,10 +120,28 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		return
 	}
 
+        csp := wrappedWriter.GetHeader("content-security-policy")
+        cspReportOnly := wrappedWriter.GetHeader("content-security-policy-report-only")
+
+        nonce := generateNonceString()
+
 	for _, rwt := range bodyRewrite.rewrites {
-                nonce := generateNonceString()
                 replacement := rwt.generateNonce(nonce)
 		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, replacement)
+
+                if csp != "" {
+                        wrappedWriter.SetHeader(
+                                "content-security-policy", 
+                                string(rwt.regex.ReplaceAll([]byte(cspReportOnly), replacement)),
+                        )
+                }
+
+                if cspReportOnly != "" {
+                        wrappedWriter.SetHeader(
+                                "content-security-policy-report-only", 
+                                string(rwt.regex.ReplaceAll([]byte(cspReportOnly), replacement)),
+                        )
+                }
 	}
 
 	bodyRewrite.logger.LogDebugf("Transformed body: %s", bodyBytes)

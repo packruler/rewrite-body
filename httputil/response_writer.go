@@ -101,8 +101,12 @@ func (wrapper *ResponseWrapper) SetContent(data []byte, encoding string) {
 	}
 }
 
-func (wrapper *ResponseWrapper) getHeader(headerName string) string {
+func (wrapper *ResponseWrapper) GetHeader(headerName string) string {
 	return wrapper.ResponseWriter.Header().Get(headerName)
+}
+
+func (wrapper *ResponseWrapper) SetHeader(headerName string, newValue string) {
+	wrapper.ResponseWriter.Header().Set(headerName, newValue)
 }
 
 // LogHeaders writes current response headers.
@@ -112,12 +116,12 @@ func (wrapper *ResponseWrapper) LogHeaders() {
 
 // getContentEncoding get the Content-Encoding header value.
 func (wrapper *ResponseWrapper) getContentEncoding() string {
-	return wrapper.getHeader("Content-Encoding")
+	return wrapper.GetHeader("Content-Encoding")
 }
 
 // getContentType get the Content-Encoding header value.
 func (wrapper *ResponseWrapper) getContentType() string {
-	return wrapper.getHeader("Content-Type")
+	return wrapper.GetHeader("Content-Type")
 }
 
 // SupportsProcessing determine if HttpWrapper is supported by this plugin based on encoding.
