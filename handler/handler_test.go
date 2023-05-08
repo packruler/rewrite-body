@@ -23,6 +23,8 @@ func TestServeHTTP(t *testing.T) {
 		resBody         string
 		expResBody      string
 		expLastModified bool
+                headers         map[string]string
+                expHeaders      map[string]string
 	}{
 		{
 			desc: "should replace foo by bar",
@@ -33,6 +35,16 @@ func TestServeHTTP(t *testing.T) {
 			contentType: "text/html",
 			resBody:     "foo is the new bar",
 			expResBody:  "bar is the new bar",
+                        headers: map[string]string{
+                          "content-security-policy": "script-src 'nonce-foo'",
+                          "content-security-policy-report-only": "script-src 'strict-dynamic' 'nonce-foo'",
+                          "baz": "script-src 'nonce-foo'",
+                        },
+                        expHeaders: map[string]string{
+                          "content-security-policy": "script-src 'nonce-bar'",
+                          "content-security-policy-report-only": "script-src 'strict-dynamic' 'nonce-bar'",
+                          "baz": "script-src 'nonce-foo'", // control group
+                        },
 		},
 		{
 			desc: "should not replace anything if content encoding is not identity or empty",
@@ -134,6 +146,10 @@ func TestServeHTTP(t *testing.T) {
 				responseWriter.Header().Set("Content-Type", test.contentType)
 				responseWriter.Header().Set("Last-Modified", "Thu, 02 Jun 2016 06:01:08 GMT")
 				responseWriter.Header().Set("Content-Length", strconv.Itoa(len(test.resBody)))
+
+                                for headerName, value := range test.headers {
+                                  responseWriter.Header().Set(headerName, value)
+                                }
 				responseWriter.WriteHeader(http.StatusOK)
 
 				_, _ = fmt.Fprintf(responseWriter, test.resBody)
@@ -157,6 +173,13 @@ func TestServeHTTP(t *testing.T) {
 			if _, exists := recorder.Result().Header["Content-Length"]; exists {
 				t.Error("The Content-Length Header must be deleted")
 			}
+
+                        for headerName, expectedValue := range test.expHeaders {
+                          actualValue := recorder.Result().Header.Get(headerName)
+                          if actualValue != expectedValue {
+                                  t.Errorf("expected %v header to be %v, got %v", headerName, expectedValue, actualValue)
+                          }
+                        }
 
 			if !bytes.Equal([]byte(test.expResBody), recorder.Body.Bytes()) {
 				t.Errorf("got body: %v\n wanted: %v", recorder.Body.Bytes(), []byte(test.expResBody))
