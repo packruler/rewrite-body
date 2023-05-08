@@ -11,7 +11,6 @@ import (
 
 	"github.com/packruler/rewrite-body/compressutil"
 	"github.com/packruler/rewrite-body/handler"
-	"github.com/packruler/rewrite-body/httputil"
 )
 
 func TestServeHTTP(t *testing.T) {
@@ -19,7 +18,8 @@ func TestServeHTTP(t *testing.T) {
 		desc            string
 		contentEncoding string
 		contentType     string `default:"text/html"`
-		rewrites        []handler.Rewrite
+                placeholder     string
+                nonceGenerator  func(string) []byte
 		lastModified    bool
 		resBody         string
 		expResBody      string
@@ -27,40 +27,20 @@ func TestServeHTTP(t *testing.T) {
 	}{
 		{
 			desc: "should replace foo by bar",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-			},
+                        placeholder: "foo",
+                        nonceGenerator: func(_ string) []byte {
+                          return []byte("bar")
+                        },
 			contentType: "text/html",
 			resBody:     "foo is the new bar",
 			expResBody:  "bar is the new bar",
 		},
 		{
-			desc: "should replace foo by bar, then by foo",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-				{
-					Regex:       "bar",
-					Replacement: "foo",
-				},
-			},
-			contentType: "text/html",
-			resBody:     "foo is the new bar",
-			expResBody:  "foo is the new foo",
-		},
-		{
 			desc: "should not replace anything if content encoding is not identity or empty",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-			},
+                        placeholder: "foo",
+                        nonceGenerator: func(_ string) []byte {
+                          return []byte("bar")
+                        },
 			contentEncoding: "other",
 			contentType:     "text/html",
 			resBody:         "foo is the new bar",
@@ -68,24 +48,20 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should not replace anything if content type does not contain text or is not empty",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-			},
+                        placeholder: "foo",
+                        nonceGenerator: func(_ string) []byte {
+                          return []byte("bar")
+                        },
 			contentType: "image",
 			resBody:     "foo is the new bar",
 			expResBody:  "foo is the new bar",
 		},
 		{
 			desc: "should replace foo by bar if content encoding is identity",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-			},
+                        placeholder: "foo",
+                        nonceGenerator: func(_ string) []byte {
+                          return []byte("bar")
+                        },
 			contentEncoding: "identity",
 			contentType:     "text/html",
 			resBody:         "foo is the new bar",
@@ -93,12 +69,10 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should not remove the last modified header",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-			},
+                        placeholder: "foo",
+                        nonceGenerator: func(_ string) []byte {
+                          return []byte("bar")
+                        },
 			contentEncoding: "identity",
 			contentType:     "text/html",
 			lastModified:    true,
@@ -108,12 +82,10 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should support gzip encoding",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-			},
+                        placeholder: "foo",
+                        nonceGenerator: func(_ string) []byte {
+                          return []byte("bar")
+                        },
 			contentEncoding: "gzip",
 			contentType:     "text/html",
 			lastModified:    true,
@@ -123,12 +95,10 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should support deflate encoding",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-			},
+                        placeholder: "foo",
+                        nonceGenerator: func(_ string) []byte {
+                          return []byte("bar")
+                        },
 			contentEncoding: "deflate",
 			contentType:     "text/html",
 			lastModified:    true,
@@ -138,12 +108,10 @@ func TestServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "should ignore unsupported encoding",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-			},
+                        placeholder: "foo",
+                        nonceGenerator: func(_ string) []byte {
+                          return []byte("bar")
+                        },
 			contentEncoding: "br",
 			contentType:     "text/html",
 			lastModified:    true,
@@ -157,7 +125,8 @@ func TestServeHTTP(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			config := &handler.Config{
 				LastModified: test.lastModified,
-				Rewrites:     test.rewrites,
+                                Placeholder:  test.placeholder,
+                                NonceGenerator: test.nonceGenerator,
 				LogLevel:     -1,
 			}
 
@@ -203,54 +172,3 @@ func compressString(value string, encoding string) string {
 	return string(compressed)
 }
 
-func TestNew(t *testing.T) {
-	tests := []struct {
-		desc     string
-		rewrites []handler.Rewrite
-		expErr   bool
-	}{
-		{
-			desc: "should return no error",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "foo",
-					Replacement: "bar",
-				},
-				{
-					Regex:       "bar",
-					Replacement: "foo",
-				},
-			},
-			expErr: false,
-		},
-		{
-			desc: "should return an error",
-			rewrites: []handler.Rewrite{
-				{
-					Regex:       "*",
-					Replacement: "bar",
-				},
-			},
-			expErr: true,
-		},
-	}
-
-	defaultMonitoring := httputil.MonitoringConfig{
-		Types:   []string{"text/html"},
-		Methods: []string{http.MethodGet},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			config := &handler.Config{
-				Rewrites:   test.rewrites,
-				Monitoring: defaultMonitoring,
-			}
-
-			_, err := New(context.Background(), nil, config, "rewriteBody")
-			if test.expErr && err == nil {
-				t.Fatal("expected error on bad regexp format")
-			}
-		})
-	}
-}

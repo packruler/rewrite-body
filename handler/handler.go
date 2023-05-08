@@ -24,19 +24,27 @@ type rewriteBody struct {
 
 // New creates and returns a new rewrite body plugin instance.
 func New(_ context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	rewrites := make([]rewrite, len(config.Rewrites))
+	rewrites := make([]rewrite, 1)
 
-	for index, rewriteConfig := range config.Rewrites {
-		regex, err := regexp.Compile(rewriteConfig.Regex)
-		if err != nil {
-			return nil, fmt.Errorf("error compiling regex %q: %w", rewriteConfig.Regex, err)
-		}
+        regex, err := regexp.Compile(config.Placeholder)
+        if err != nil {
+                return nil, fmt.Errorf("error compiling regex %q: %w", config.Placeholder, err)
+        }
 
-		rewrites[index] = rewrite{
-			regex:       regex,
-			replacement: []byte(rewriteConfig.Replacement),
-		}
-	}
+        generateNonce := nonceGenerator(nil)
+
+        if config.NonceGenerator == nil {
+          generateNonce = func(_nonce string) []byte {
+            return []byte("SomebodyOnceToldMe")
+          }
+        } else {
+          generateNonce = config.NonceGenerator
+        }
+
+        rewrites[0] = rewrite{
+                regex:       regex,
+                generateNonce: generateNonce,
+        }
 
 	logWriter := *logger.CreateLogger(logger.LogLevel(config.LogLevel))
 
@@ -113,7 +121,8 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 	}
 
 	for _, rwt := range bodyRewrite.rewrites {
-		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, rwt.replacement)
+                replacement := rwt.generateNonce("TODO: pass nonce")
+		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, replacement)
 	}
 
 	bodyRewrite.logger.LogDebugf("Transformed body: %s", bodyBytes)
