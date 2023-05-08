@@ -1,5 +1,4 @@
-
-package handler
+package httputil
 
 import (
 	"crypto/rand"

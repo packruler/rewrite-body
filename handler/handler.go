@@ -86,7 +86,13 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		bodyRewrite.monitoringConfig,
 		bodyRewrite.logger,
 		bodyRewrite.lastModified,
+                bodyRewrite.rewrites[0].regex,
+                bodyRewrite.rewrites[0].generateNonce,
 	)
+
+	bodyRewrite.logger.LogDebugf("Rewriting CSP! %v", wrappedWriter.GetHeader("content-security-policy"))
+        wrappedWriter.LogHeaders()
+
 
 	wrappedWriter.SetLastModified(bodyRewrite.lastModified)
 
@@ -120,28 +126,12 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		return
 	}
 
-        csp := wrappedWriter.GetHeader("content-security-policy")
-        cspReportOnly := wrappedWriter.GetHeader("content-security-policy-report-only")
 
-        nonce := generateNonceString()
+        nonce := wrappedWriter.GetHeader("csp-nonce-value")
 
 	for _, rwt := range bodyRewrite.rewrites {
                 replacement := rwt.generateNonce(nonce)
 		bodyBytes = rwt.regex.ReplaceAll(bodyBytes, replacement)
-
-                if csp != "" {
-                        wrappedWriter.SetHeader(
-                                "content-security-policy", 
-                                string(rwt.regex.ReplaceAll([]byte(cspReportOnly), replacement)),
-                        )
-                }
-
-                if cspReportOnly != "" {
-                        wrappedWriter.SetHeader(
-                                "content-security-policy-report-only", 
-                                string(rwt.regex.ReplaceAll([]byte(cspReportOnly), replacement)),
-                        )
-                }
 	}
 
 	bodyRewrite.logger.LogDebugf("Transformed body: %s", bodyBytes)

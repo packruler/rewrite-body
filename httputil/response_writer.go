@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+        "regexp"
 
 	"github.com/joinrepublic/traefik-rewrite-body-csp/compressutil"
 	"github.com/joinrepublic/traefik-rewrite-body-csp/logger"
@@ -24,6 +25,9 @@ type ResponseWrapper struct {
 	logWriter  logger.LogWriter
 	monitoring MonitoringConfig
 
+        cspPlaceholder *regexp.Regexp
+        generateNonce func(string) []byte
+
 	http.ResponseWriter
 }
 
@@ -33,6 +37,8 @@ func WrapWriter(
 	monitoringConfig MonitoringConfig,
 	logWriter logger.LogWriter,
 	lastModified bool,
+        cspPlaceholder *regexp.Regexp,
+        generateNonce func(string) []byte,
 ) *ResponseWrapper {
 	return &ResponseWrapper{
 		buffer:         bytes.Buffer{},
@@ -42,7 +48,37 @@ func WrapWriter(
 		logWriter:      logWriter,
 		monitoring:     monitoringConfig,
 		ResponseWriter: responseWriter,
+                cspPlaceholder: cspPlaceholder,
+                generateNonce:  generateNonce,
 	}
+}
+
+func (wrapper *ResponseWrapper) ContainsCSP() bool {
+        return wrapper.GetHeader("content-security-policy") != "" || wrapper.GetHeader("content-security-policy-report-only") != ""
+}
+func (wrapper *ResponseWrapper) overrideCSPHeaders() {
+        nonce := generateNonceString()
+
+        csp := wrapper.GetHeader("content-security-policy")
+        cspReportOnly := wrapper.GetHeader("content-security-policy-report-only")
+
+        replacement := wrapper.generateNonce(nonce)
+
+        if csp != "" {
+                wrapper.Header().Del("content-security-policy")
+                wrapper.SetHeader(
+                        "content-security-policy", 
+                        string(wrapper.cspPlaceholder.ReplaceAll([]byte(csp), replacement)),
+                )
+        }
+
+        if cspReportOnly != "" {
+                wrapper.Header().Del("content-security-policy-report-only")
+                wrapper.SetHeader(
+                        "content-security-policy-report-only", 
+                        string(wrapper.cspPlaceholder.ReplaceAll([]byte(cspReportOnly), replacement)),
+                )
+        }
 }
 
 // WriteHeader into wrapped ResponseWriter.
@@ -50,6 +86,10 @@ func (wrapper *ResponseWrapper) WriteHeader(statusCode int) {
 	if wrapper.wroteHeader {
 		return
 	}
+
+        if wrapper.ContainsCSP() {
+          wrapper.overrideCSPHeaders()
+        }
 
 	if !wrapper.lastModified {
 		wrapper.ResponseWriter.Header().Del("Last-Modified")
