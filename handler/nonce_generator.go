@@ -6,21 +6,28 @@ import (
 	"math/big"
 )
 
-func GenerateRandomString(n int) []byte {
+func generateRandomString(length int) []byte {
 	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
-	ret := make([]byte, n)
-	for i := 0; i < n; i++ {
+	ret := make([]byte, length)
+
+	for idx := 0; idx < length; idx++ {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
 		if err != nil {
 			return []byte("")
 		}
-		ret[i] = letters[num.Int64()]
+
+		ret[idx] = letters[num.Int64()]
 	}
 
 	return ret
 }
 
 func generateNonceString(length int) string {
-	randomValue := GenerateRandomString(length)
-	return base64.URLEncoding.EncodeToString([]byte(randomValue))
+	randomValue := generateRandomString(length)
+
+	return base64.URLEncoding.EncodeToString(randomValue)
+}
+
+func defaultNonceGenerator() []byte {
+	return []byte(generateNonceString(40))
 }

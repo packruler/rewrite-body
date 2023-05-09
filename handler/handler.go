@@ -29,13 +29,9 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		return nil, fmt.Errorf("error compiling regex %q: %w", config.Placeholder, err)
 	}
 
-	generateNonce := nonceGenerator(nil)
+	generateNonce := defaultNonceGenerator
 
-	if config.NonceGenerator == nil {
-		generateNonce = func() []byte {
-			return []byte(generateNonceString(40))
-		}
-	} else {
+	if config.NonceGenerator != nil {
 		generateNonce = config.NonceGenerator
 	}
 

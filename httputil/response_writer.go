@@ -53,20 +53,25 @@ func WrapWriter(
 	}
 }
 
+// ContainsCSP tells whether or not current response contains CSP related headers
 func (wrapper *ResponseWrapper) ContainsCSP() bool {
-	return wrapper.GetHeader("content-security-policy") != "" || wrapper.GetHeader("content-security-policy-report-only") != ""
+	csp := wrapper.GetHeader("content-security-policy")
+	cspReportOnly := wrapper.GetHeader("content-security-policy-report-only")
+
+	return csp != "" || cspReportOnly != ""
 }
+
 func (wrapper *ResponseWrapper) overrideCSPHeaders() {
 	csp := wrapper.GetHeader("content-security-policy")
 	cspReportOnly := wrapper.GetHeader("content-security-policy-report-only")
 
 	replacement := wrapper.generateNonce()
 
-	wrapper.SetHeader("csp-nonce-value", string(replacement))
+	wrapper.setHeader("csp-nonce-value", string(replacement))
 
 	if csp != "" {
 		wrapper.Header().Del("content-security-policy")
-		wrapper.SetHeader(
+		wrapper.setHeader(
 			"content-security-policy",
 			string(wrapper.cspPlaceholder.ReplaceAll([]byte(csp), replacement)),
 		)
@@ -74,7 +79,7 @@ func (wrapper *ResponseWrapper) overrideCSPHeaders() {
 
 	if cspReportOnly != "" {
 		wrapper.Header().Del("content-security-policy-report-only")
-		wrapper.SetHeader(
+		wrapper.setHeader(
 			"content-security-policy-report-only",
 			string(wrapper.cspPlaceholder.ReplaceAll([]byte(cspReportOnly), replacement)),
 		)
@@ -141,11 +146,13 @@ func (wrapper *ResponseWrapper) SetContent(data []byte, encoding string) {
 	}
 }
 
+// GetHeader returs header value.
 func (wrapper *ResponseWrapper) GetHeader(headerName string) string {
 	return wrapper.ResponseWriter.Header().Get(headerName)
 }
 
-func (wrapper *ResponseWrapper) SetHeader(headerName string, newValue string) {
+// Override header value.
+func (wrapper *ResponseWrapper) setHeader(headerName string, newValue string) {
 	wrapper.ResponseWriter.Header().Set(headerName, newValue)
 }
 
