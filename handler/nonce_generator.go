@@ -6,7 +6,6 @@ import (
 	"math/big"
 )
 
-
 func GenerateRandomString(n int) []byte {
 	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
 	ret := make([]byte, n)

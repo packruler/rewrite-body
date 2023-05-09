@@ -24,25 +24,25 @@ type rewriteBody struct {
 
 // New creates and returns a new rewrite body plugin instance.
 func New(_ context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-        regex, err := regexp.Compile(config.Placeholder)
-        if err != nil {
-                return nil, fmt.Errorf("error compiling regex %q: %w", config.Placeholder, err)
-        }
+	regex, err := regexp.Compile(config.Placeholder)
+	if err != nil {
+		return nil, fmt.Errorf("error compiling regex %q: %w", config.Placeholder, err)
+	}
 
-        generateNonce := nonceGenerator(nil)
+	generateNonce := nonceGenerator(nil)
 
-        if config.NonceGenerator == nil {
-          generateNonce = func() []byte {
-            return []byte(generateNonceString(40))
-          }
-        } else {
-          generateNonce = config.NonceGenerator
-        }
+	if config.NonceGenerator == nil {
+		generateNonce = func() []byte {
+			return []byte(generateNonceString(40))
+		}
+	} else {
+		generateNonce = config.NonceGenerator
+	}
 
-        rewrites := rewrite{
-                regex:       regex,
-                generateNonce: generateNonce,
-        }
+	rewrites := rewrite{
+		regex:         regex,
+		generateNonce: generateNonce,
+	}
 
 	logWriter := *logger.CreateLogger(logger.LogLevel(config.LogLevel))
 
@@ -84,12 +84,11 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 		bodyRewrite.monitoringConfig,
 		bodyRewrite.logger,
 		bodyRewrite.lastModified,
-                bodyRewrite.rewrites.regex,
-                bodyRewrite.rewrites.generateNonce,
+		bodyRewrite.rewrites.regex,
+		bodyRewrite.rewrites.generateNonce,
 	)
 
-        wrappedWriter.LogHeaders()
-
+	wrappedWriter.LogHeaders()
 
 	wrappedWriter.SetLastModified(bodyRewrite.lastModified)
 
@@ -118,7 +117,7 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	bodyRewrite.logger.LogDebugf("Response body: %s", bodyBytes)
 
-        nonce := wrappedWriter.GetHeader("csp-nonce-value")
+	nonce := wrappedWriter.GetHeader("csp-nonce-value")
 
 	if len(bodyBytes) == 0 || len(nonce) == 0 {
 		// If the body is empty there is no purpose in continuing this process.
@@ -127,8 +126,8 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	bodyRewrite.logger.LogDebugf("Taking nonce value from header: %v", nonce)
 
-        replacement := []byte(nonce)
-        bodyBytes = bodyRewrite.rewrites.regex.ReplaceAll(bodyBytes, replacement)
+	replacement := []byte(nonce)
+	bodyBytes = bodyRewrite.rewrites.regex.ReplaceAll(bodyBytes, replacement)
 
 	bodyRewrite.logger.LogDebugf("Transformed body: %s", bodyBytes)
 

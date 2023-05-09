@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
-        "regexp"
 
 	"github.com/joinrepublic/traefik-rewrite-body-csp/compressutil"
 	"github.com/joinrepublic/traefik-rewrite-body-csp/logger"
@@ -25,8 +25,8 @@ type ResponseWrapper struct {
 	logWriter  logger.LogWriter
 	monitoring MonitoringConfig
 
-        cspPlaceholder *regexp.Regexp
-        generateNonce func() []byte
+	cspPlaceholder *regexp.Regexp
+	generateNonce  func() []byte
 
 	http.ResponseWriter
 }
@@ -37,8 +37,8 @@ func WrapWriter(
 	monitoringConfig MonitoringConfig,
 	logWriter logger.LogWriter,
 	lastModified bool,
-        cspPlaceholder *regexp.Regexp,
-        generateNonce func() []byte,
+	cspPlaceholder *regexp.Regexp,
+	generateNonce func() []byte,
 ) *ResponseWrapper {
 	return &ResponseWrapper{
 		buffer:         bytes.Buffer{},
@@ -48,37 +48,37 @@ func WrapWriter(
 		logWriter:      logWriter,
 		monitoring:     monitoringConfig,
 		ResponseWriter: responseWriter,
-                cspPlaceholder: cspPlaceholder,
-                generateNonce:  generateNonce,
+		cspPlaceholder: cspPlaceholder,
+		generateNonce:  generateNonce,
 	}
 }
 
 func (wrapper *ResponseWrapper) ContainsCSP() bool {
-        return wrapper.GetHeader("content-security-policy") != "" || wrapper.GetHeader("content-security-policy-report-only") != ""
+	return wrapper.GetHeader("content-security-policy") != "" || wrapper.GetHeader("content-security-policy-report-only") != ""
 }
 func (wrapper *ResponseWrapper) overrideCSPHeaders() {
-        csp := wrapper.GetHeader("content-security-policy")
-        cspReportOnly := wrapper.GetHeader("content-security-policy-report-only")
+	csp := wrapper.GetHeader("content-security-policy")
+	cspReportOnly := wrapper.GetHeader("content-security-policy-report-only")
 
-        replacement := wrapper.generateNonce()
+	replacement := wrapper.generateNonce()
 
-        wrapper.SetHeader("csp-nonce-value", string(replacement))
+	wrapper.SetHeader("csp-nonce-value", string(replacement))
 
-        if csp != "" {
-                wrapper.Header().Del("content-security-policy")
-                wrapper.SetHeader(
-                        "content-security-policy", 
-                        string(wrapper.cspPlaceholder.ReplaceAll([]byte(csp), replacement)),
-                )
-        }
+	if csp != "" {
+		wrapper.Header().Del("content-security-policy")
+		wrapper.SetHeader(
+			"content-security-policy",
+			string(wrapper.cspPlaceholder.ReplaceAll([]byte(csp), replacement)),
+		)
+	}
 
-        if cspReportOnly != "" {
-                wrapper.Header().Del("content-security-policy-report-only")
-                wrapper.SetHeader(
-                        "content-security-policy-report-only", 
-                        string(wrapper.cspPlaceholder.ReplaceAll([]byte(cspReportOnly), replacement)),
-                )
-        }
+	if cspReportOnly != "" {
+		wrapper.Header().Del("content-security-policy-report-only")
+		wrapper.SetHeader(
+			"content-security-policy-report-only",
+			string(wrapper.cspPlaceholder.ReplaceAll([]byte(cspReportOnly), replacement)),
+		)
+	}
 }
 
 // WriteHeader into wrapped ResponseWriter.
@@ -87,9 +87,9 @@ func (wrapper *ResponseWrapper) WriteHeader(statusCode int) {
 		return
 	}
 
-        if wrapper.ContainsCSP() {
-          wrapper.overrideCSPHeaders()
-        }
+	if wrapper.ContainsCSP() {
+		wrapper.overrideCSPHeaders()
+	}
 
 	if !wrapper.lastModified {
 		wrapper.ResponseWriter.Header().Del("Last-Modified")
