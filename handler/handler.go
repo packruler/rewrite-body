@@ -88,7 +88,6 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
                 bodyRewrite.rewrites.generateNonce,
 	)
 
-	bodyRewrite.logger.LogDebugf("Rewriting CSP! %v", wrappedWriter.GetHeader("content-security-policy"))
         wrappedWriter.LogHeaders()
 
 
@@ -119,15 +118,16 @@ func (bodyRewrite *rewriteBody) ServeHTTP(response http.ResponseWriter, req *htt
 
 	bodyRewrite.logger.LogDebugf("Response body: %s", bodyBytes)
 
-	if len(bodyBytes) == 0 {
+        nonce := wrappedWriter.GetHeader("csp-nonce-value")
+
+	if len(bodyBytes) == 0 || len(nonce) == 0 {
 		// If the body is empty there is no purpose in continuing this process.
 		return
 	}
 
+	bodyRewrite.logger.LogDebugf("Taking nonce value from header: %v", nonce)
 
-        nonce := wrappedWriter.GetHeader("csp-nonce-value")
-
-        replacement := bodyRewrite.rewrites.generateNonce(nonce)
+        replacement := []byte(nonce)
         bodyBytes = bodyRewrite.rewrites.regex.ReplaceAll(bodyBytes, replacement)
 
 	bodyRewrite.logger.LogDebugf("Transformed body: %s", bodyBytes)

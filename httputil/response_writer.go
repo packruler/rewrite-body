@@ -64,6 +64,8 @@ func (wrapper *ResponseWrapper) overrideCSPHeaders() {
 
         replacement := wrapper.generateNonce(nonce)
 
+        wrapper.SetHeader("csp-nonce-value", string(replacement))
+
         if csp != "" {
                 wrapper.Header().Del("content-security-policy")
                 wrapper.SetHeader(

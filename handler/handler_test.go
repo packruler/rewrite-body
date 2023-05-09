@@ -56,6 +56,9 @@ func TestServeHTTP(t *testing.T) {
 			contentType:     "text/html",
 			resBody:         "foo is the new bar",
 			expResBody:      "foo is the new bar",
+                        headers: map[string]string{
+                          "content-security-policy": "script-src 'nonce-foo'",
+                        },
 		},
 		{
 			desc: "should not replace anything if content type does not contain text or is not empty",
@@ -66,6 +69,9 @@ func TestServeHTTP(t *testing.T) {
 			contentType: "image",
 			resBody:     "foo is the new bar",
 			expResBody:  "foo is the new bar",
+                        headers: map[string]string{
+                          "content-security-policy": "script-src 'nonce-foo'",
+                        },
 		},
 		{
 			desc: "should replace foo by bar if content encoding is identity",
@@ -77,6 +83,9 @@ func TestServeHTTP(t *testing.T) {
 			contentType:     "text/html",
 			resBody:         "foo is the new bar",
 			expResBody:      "bar is the new bar",
+                        headers: map[string]string{
+                          "content-security-policy": "script-src 'nonce-foo'",
+                        },
 		},
 		{
 			desc: "should not remove the last modified header",
@@ -90,6 +99,9 @@ func TestServeHTTP(t *testing.T) {
 			resBody:         "foo is the new bar",
 			expResBody:      "bar is the new bar",
 			expLastModified: true,
+                        headers: map[string]string{
+                          "content-security-policy": "script-src 'nonce-foo'",
+                        },
 		},
 		{
 			desc: "should support gzip encoding",
@@ -103,6 +115,9 @@ func TestServeHTTP(t *testing.T) {
 			resBody:         compressString("foo is the new bar", "gzip"),
 			expResBody:      compressString("bar is the new bar", "gzip"),
 			expLastModified: true,
+                        headers: map[string]string{
+                          "content-security-policy": "script-src 'nonce-foo'",
+                        },
 		},
 		{
 			desc: "should support deflate encoding",
@@ -116,6 +131,9 @@ func TestServeHTTP(t *testing.T) {
 			resBody:         compressString("foo is the new bar", "deflate"),
 			expResBody:      compressString("bar is the new bar", "deflate"),
 			expLastModified: true,
+                        headers: map[string]string{
+                          "content-security-policy": "script-src 'nonce-foo'",
+                        },
 		},
 		{
 			desc: "should ignore unsupported encoding",
@@ -129,6 +147,9 @@ func TestServeHTTP(t *testing.T) {
 			resBody:         "foo is the new bar",
 			expResBody:      "foo is the new bar",
 			expLastModified: true,
+                        headers: map[string]string{
+                          "content-security-policy": "script-src 'nonce-foo'",
+                        },
 		},
 	}
 
