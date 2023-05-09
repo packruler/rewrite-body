@@ -6,7 +6,7 @@ import (
 	"github.com/joinrepublic/traefik-rewrite-body-csp/httputil"
 )
 
-type nonceGenerator func(string) []byte
+type nonceGenerator func() []byte
 
 // Config holds the plugin configuration.
 type Config struct {

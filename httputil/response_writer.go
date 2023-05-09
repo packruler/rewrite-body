@@ -26,7 +26,7 @@ type ResponseWrapper struct {
 	monitoring MonitoringConfig
 
         cspPlaceholder *regexp.Regexp
-        generateNonce func(string) []byte
+        generateNonce func() []byte
 
 	http.ResponseWriter
 }
@@ -38,7 +38,7 @@ func WrapWriter(
 	logWriter logger.LogWriter,
 	lastModified bool,
         cspPlaceholder *regexp.Regexp,
-        generateNonce func(string) []byte,
+        generateNonce func() []byte,
 ) *ResponseWrapper {
 	return &ResponseWrapper{
 		buffer:         bytes.Buffer{},
@@ -57,12 +57,10 @@ func (wrapper *ResponseWrapper) ContainsCSP() bool {
         return wrapper.GetHeader("content-security-policy") != "" || wrapper.GetHeader("content-security-policy-report-only") != ""
 }
 func (wrapper *ResponseWrapper) overrideCSPHeaders() {
-        nonce := generateNonceString()
-
         csp := wrapper.GetHeader("content-security-policy")
         cspReportOnly := wrapper.GetHeader("content-security-policy-report-only")
 
-        replacement := wrapper.generateNonce(nonce)
+        replacement := wrapper.generateNonce()
 
         wrapper.SetHeader("csp-nonce-value", string(replacement))
 

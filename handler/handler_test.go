@@ -29,7 +29,7 @@ func TestServeHTTP(t *testing.T) {
 		{
 			desc: "should replace foo by bar",
                         placeholder: "foo",
-                        nonceGenerator: func(_ string) []byte {
+                        nonceGenerator: func() []byte {
                           return []byte("bar")
                         },
 			contentType: "text/html",
@@ -49,7 +49,7 @@ func TestServeHTTP(t *testing.T) {
 		{
 			desc: "should not replace anything if content encoding is not identity or empty",
                         placeholder: "foo",
-                        nonceGenerator: func(_ string) []byte {
+                        nonceGenerator: func() []byte {
                           return []byte("bar")
                         },
 			contentEncoding: "other",
@@ -63,7 +63,7 @@ func TestServeHTTP(t *testing.T) {
 		{
 			desc: "should not replace anything if content type does not contain text or is not empty",
                         placeholder: "foo",
-                        nonceGenerator: func(_ string) []byte {
+                        nonceGenerator: func() []byte {
                           return []byte("bar")
                         },
 			contentType: "image",
@@ -76,7 +76,7 @@ func TestServeHTTP(t *testing.T) {
 		{
 			desc: "should replace foo by bar if content encoding is identity",
                         placeholder: "foo",
-                        nonceGenerator: func(_ string) []byte {
+                        nonceGenerator: func() []byte {
                           return []byte("bar")
                         },
 			contentEncoding: "identity",
@@ -90,7 +90,7 @@ func TestServeHTTP(t *testing.T) {
 		{
 			desc: "should not remove the last modified header",
                         placeholder: "foo",
-                        nonceGenerator: func(_ string) []byte {
+                        nonceGenerator: func() []byte {
                           return []byte("bar")
                         },
 			contentEncoding: "identity",
@@ -106,7 +106,7 @@ func TestServeHTTP(t *testing.T) {
 		{
 			desc: "should support gzip encoding",
                         placeholder: "foo",
-                        nonceGenerator: func(_ string) []byte {
+                        nonceGenerator: func() []byte {
                           return []byte("bar")
                         },
 			contentEncoding: "gzip",
@@ -122,7 +122,7 @@ func TestServeHTTP(t *testing.T) {
 		{
 			desc: "should support deflate encoding",
                         placeholder: "foo",
-                        nonceGenerator: func(_ string) []byte {
+                        nonceGenerator: func() []byte {
                           return []byte("bar")
                         },
 			contentEncoding: "deflate",
@@ -138,7 +138,7 @@ func TestServeHTTP(t *testing.T) {
 		{
 			desc: "should ignore unsupported encoding",
                         placeholder: "foo",
-                        nonceGenerator: func(_ string) []byte {
+                        nonceGenerator: func() []byte {
                           return []byte("bar")
                         },
 			contentEncoding: "br",

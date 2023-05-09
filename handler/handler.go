@@ -32,8 +32,8 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
         generateNonce := nonceGenerator(nil)
 
         if config.NonceGenerator == nil {
-          generateNonce = func(nonce string) []byte {
-            return []byte(nonce)
+          generateNonce = func() []byte {
+            return []byte(generateNonceString(40))
           }
         } else {
           generateNonce = config.NonceGenerator
